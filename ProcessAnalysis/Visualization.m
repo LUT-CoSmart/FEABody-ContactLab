@@ -21,7 +21,7 @@ function Visualization(Body,vis, ShowNodeNumbers)
            %  fprintf('presenting deformation along %s\n', vis);
         elseif startsWith(vis, "sigma")
             Sigma = [];
-            texting = "Stress: ";
+            texting = "Inner stress: ";
             switch vis
                 case "sigma_xx"
                     Normal_1 = [1; 0];

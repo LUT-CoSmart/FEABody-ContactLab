@@ -30,7 +30,7 @@ function Result = FindPoint(Body,Point)
     if ~( (t_a < tol || abs(t_a - 1) < tol) && distance > tol )  % sanity check that the point isn't outside  (t_a ~= 0, 1)
                                                                  % and having distance > 0 at the same time                
         % To what element these nodes belong
-        % idea that on the edge, two nodes are uniquely belong to one element only 
+        % this is a linear element, therefore two nodes are uniquely belong to one element only 
         ElemenNumber = find(any(nloc == a, 2) & any(nloc == b, 2)); 
 
         if ~isempty(ElemenNumber) % sanity check (probably need to be removed)

@@ -1,6 +1,6 @@
 function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation)
 
-    approach.penalty = 1e10;  
+    approach.penalty =1e10;  
     approach.perturbation = Perturbation;
 
     % sanity check, that approach and subtype are correlating 

@@ -21,10 +21,10 @@ Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
 dx1 = 8;
-dy1 = 2;
+dy1 = 4;
 
-dx2 = 14;
-dy2 = 2;
+dx2 = 8;
+dy2 = 4;
 
 Body1.nElems.x = dx1;
 Body1.nElems.y = dy1;
@@ -48,8 +48,7 @@ Body2 = CreateBC(Body2);
 %##################### Loadings ######################
 % local positions (assuming all bodies in (0,0) )
 Body1.Fext.x = 0; 
-Body1.Fext.y = -3*10^8;
-
+Body1.Fext.y = -62.5*10^(6);%-62500000; -62.5*10^(6)
 
 Body1.Fext.loc.x = Body1.Lx;
 Body1.Fext.loc.y = 'all';
@@ -85,12 +84,12 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 % Options: None, Penalty, Lagrange
-approachBasis = "Lagrange"; 
+approachBasis = "None"; 
 % Subtypes
 % Penalty: Penalty, Nitshe-linear, Nitshe-nonlinear, Nitshe-nonlinear-all, Augumented Lagrange (Lagrange here is questionable, but makes implemnetation easier)   
 % Lagrange: Lagrange, perturbed Lagrange
-approachSubtype = "Lagrange"; 
-PointsofInterest.Name = "Gauss"; % options: "nodes", "Gauss", "LinSpace" 
+approachSubtype = "Penalty"; 
+PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
@@ -104,10 +103,10 @@ Perturbation = "automatic"; % Options: "automatic", "incremental"
 approach = ApproachSettings(approachBasis, approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation);
 
 %##################### Newton iter. parameters ######################
-imax=20;
+imax=20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 20;
+steps= 30;
 
 % %#################### Processing ######################
 total_steps = 0;
@@ -158,6 +157,6 @@ end
 % %##################### Post-Processing ######################
 ShowVisualization = true;
 ShowNodeNumbers = false;
-WhatoToShow = "u_total"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
+WhatoToShow = "sigma_xy"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
 PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc);
 
