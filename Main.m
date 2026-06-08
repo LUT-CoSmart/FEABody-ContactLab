@@ -21,9 +21,9 @@ Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
 dx1 = 8;
-dy1 = 4;
+dy1 = 2;
 
-dx2 = 8;
+dx2 = 10;
 dy2 = 4;
 
 Body1.nElems.x = dx1;
@@ -48,7 +48,7 @@ Body2 = CreateBC(Body2);
 %##################### Loadings ######################
 % local positions (assuming all bodies in (0,0) )
 Body1.Fext.x = 0; 
-Body1.Fext.y = -62.5*10^(6);%-62500000; -62.5*10^(6)
+Body1.Fext.y = -62.5*10^(6);
 
 Body1.Fext.loc.x = Body1.Lx;
 Body1.Fext.loc.y = 'all';
@@ -84,11 +84,11 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 % Options: None, Penalty, Lagrange
-approachBasis = "None"; 
+approachBasis = "Penalty"; 
 % Subtypes
 % Penalty: Penalty, Nitshe-linear, Nitshe-nonlinear, Nitshe-nonlinear-all, Augumented Lagrange (Lagrange here is questionable, but makes implemnetation easier)   
 % Lagrange: Lagrange, perturbed Lagrange
-approachSubtype = "Penalty"; 
+approachSubtype = "Nitshe-nonlinear"; 
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
@@ -106,8 +106,8 @@ approach = ApproachSettings(approachBasis, approachSubtype,ContactPointfunc, Gap
 imax=20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 30;
-
+steps= 20;
+Solution = "Newton-Rapson";
 % %#################### Processing ######################
 total_steps = 0;
 titertot=0;  
@@ -131,7 +131,7 @@ for ii = 1:steps
                 Body1 = Elastic(Body1);
                 Body2 = Elastic(Body2);
 
-                [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(Body1, Body2, DofsFunction, Stiffness,approach);
+                [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(Solution,Body1, Body2, DofsFunction, Stiffness,approach);
               
                 titer=toc;
                 titertot=titertot+titer;
@@ -157,6 +157,6 @@ end
 % %##################### Post-Processing ######################
 ShowVisualization = true;
 ShowNodeNumbers = false;
-WhatoToShow = "sigma_xy"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
-PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc);
+WhatoToShow = "u_total"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
+PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution);
 

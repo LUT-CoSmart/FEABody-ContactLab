@@ -1,6 +1,6 @@
 function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation)
 
-    approach.penalty =1e10;  
+    approach.penalty =1e9;  
     approach.perturbation = Perturbation;
 
     % sanity check, that approach and subtype are correlating 
@@ -26,7 +26,7 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
         end
 
         if approachSubtype == "Augumented Lagrange"
-            approach.penalty = 1e8;  % decreasing parameter for better stability, method operates with any small penalty 
+            approach.penalty = 1e7;  % decreasing parameter for better stability, method operates with any small penalty 
         end
 
         approach.Name = approachSubtype; 

@@ -60,7 +60,8 @@ function Fc = ContactForce(ContactBody,TargetBody,approach,ContactPointfunc)
     
                    nabla_sigma_cont = nabla_sigma_2412(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont(1),xi_cont(2));
                    Nabla_Sigma_n_cont = NablaMultiplication(nabla_sigma_cont,Normal_cont); 
-    
+                    
+                   % it is correct sign in parentheses due to the first multiplication of n_cont.  
                    Nabla_Sigma_n = Normal_cont' * (Nabla_Sigma_n_cont + Nabla_Sigma_n_targ) * Normal_cont; 
                    
                    d_lambda_targ = d_lambda_targ + Gap * Nabla_Sigma_n * Normal_targ;

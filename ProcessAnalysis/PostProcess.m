@@ -1,4 +1,4 @@
-function PostProcess(Body1, Body2, ShowVisualization, vis, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc)
+function PostProcess(Body1, Body2, ShowVisualization, vis, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution)
 
 % fprintf('Static test, contact approach = %s  \n', approach.Name);
 
@@ -18,12 +18,12 @@ if ShowVisualization
     % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % visualization of contact points and contact method
     [ContactPoints, ~] = ContactPointfunc(Body1);  
-    h1 = plot(ContactPoints(:,1),ContactPoints(:,2),'ok','MarkerFaceColor', 'k', 'MarkerSize', 4);
+    h1 = plot(ContactPoints(:,1),ContactPoints(:,2),'ok','MarkerFaceColor', 'k', 'MarkerSize', 10);
     legend('contact points')
     legend(h1, 'contact points');
     Gap =  Gapfunc(Body1,Body2);
     gapStr = sprintf('%.5f', Gap);
-    fullstr = "Method = " + approach.Name + ", Total Gap = " + gapStr;
-    title(fullstr, 'Interpreter', 'latex');
+    fullstr = "Solution method - " + Solution +", Contact method = " + approach.Name + ", Total Gap = " + gapStr;
+    title(fullstr, 'Interpreter', 'latex','FontSize', 20);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 end    

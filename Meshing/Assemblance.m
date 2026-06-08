@@ -1,4 +1,4 @@
-function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(Body1,Body2,DofsFunction,Stiffness,approach)
+function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(Solution,Body1,Body2,DofsFunction,Stiffness,approach)
     
     Type = approach.Type;
     Name = approach.Name;
@@ -50,14 +50,17 @@ function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(Body1,Body2,DofsFun
 
     end    
     
-    num = cond(K_bc);
-    if num > 1e12
-       D = diag(1./sqrt(sum(K_bc.^2,2)));
-       uu_bc =- (D*K_bc)\(D*ff_bc);
-    else 
-        uu_bc = -K_bc\ff_bc;
+    if Solution == "Newton-Rapson"
+        num = cond(K_bc);
+        if num > 1e12
+           D = diag(1./sqrt(sum(K_bc.^2,2)));
+           uu_bc =- (D*K_bc)\(D*ff_bc);
+        else 
+            uu_bc = -K_bc\ff_bc;
+        end
+    else
+        error('Unkown solutiuon method');
     end
-    
     deltaf = ff_bc(1:size(Ke_bc,1))/norm(Fext_bc);
     uu_bc = uu_bc(1:Body1.ndof + Body2.ndof); % removing potential additional DOFs from Lagrange-based approaches
     
