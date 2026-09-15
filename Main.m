@@ -90,76 +90,91 @@ approachBasis = "Penalty";
 % Lagrange: Lagrange, perturbed Lagrange
 approachSubtype = "Augumented Lagrange"; 
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
-PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
+PointsofInterest.n = 2; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
 % For Lagrange-based methods, a large number of contact points can lead to an overconstrained solution.
 % The reasoning is as follows. The points can be projected over several elements of the target body, which shape functions are linear.
 % That makes several consequenced elements be in one line. The same reason is to have coarser mesh for the contact body than the target one.  
 % ==============================================================================================================
-
+backtrack = true; % staring back track for the best solution to find an equlibrium
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
-approach = ApproachSettings(approachBasis, approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation);
+approach = ApproachSettings(approachBasis, approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation,backtrack);
 
 if approachSubtype == "Augumented Lagrange"
-    gapTol = 1e-3;
     [InitialContactPoints,~] = ContactPointfunc(Body1);
     approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
 else
     approach.lambda.meaning = [];
 end
 %##################### Newton iter. parameters ######################
-imax=20; 
-tol=1e-3;   
+imax = 20; 
+tol=1e-4;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 20;
-Solution = "Newton-Rapson";
+steps= 1;
+Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 % %#################### Processing ######################
+
 total_steps = 0;
 titertot=0;  
+
 for ii = 1:steps
         
         approach.lambda.converge = false;      
         Body1 = CreateFext(ii,steps,Body1,type);
         Body2 = CreateFext(ii,steps,Body2,type);
-   
+        
         while (~approach.lambda.converge) % special case for Augumented Lagrange    
 
-            for jj = 1:imax % contact convergence
-                tic;
-                % interaction of two bodies
-                [DofsFunction, Stiffness] = Contact(Body1,Body2,approach);
+                for lambdaBackTrack = approach.lambdaList % backtrack loop
 
-                Gap = Gapfunc(Body1,Body2);
-                % inner forces of the each body
-                Body1 = Elastic(Body1);
-                Body2 = Elastic(Body2);
+                    if lambdaBackTrack < 1
+                        fprintf("!!! Starting  Backtrack for lambda = %f !!!! \n",lambdaBackTrack)            
+                    end 
 
-                [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(Solution,Body1, Body2, DofsFunction,Stiffness,approach);
-              
-                titer=toc;
-                titertot=titertot+titer;
+                    for jj = 1:imax % contact convergence
+                        tic;
+                        % interaction of two bodies
+                        [DofsFunction, Stiffness] = Contact(Body1,Body2,approach,jj,Solution);
+        
+                        Gap = Gapfunc(Body1,Body2);
+                        % inner forces of the each body
+                        Body1 = Elastic(Body1);
+                        Body2 = Elastic(Body2);
 
-                if printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap)
-                    break;  
-                end  
-            end
+                        [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(jj,Solution,Body1, Body2, DofsFunction,Stiffness,approach,lambdaBackTrack);
+                      
+                        titer=toc;
+                        titertot=titertot+titer;
+        
+                        if printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap)
+                            break;  
+                        end  
+    
+                        [Body1,Body2] = BestStep(backtrack,lambdaBackTrack,Gap,Body1,Body2,deltaf,jj,imax);
+    
+                    end
+    
+                    if jj < imax % it is needed for exit from the second loop (exit from backtrack)
+                        break;
+                    end
 
-            if approach.Name == "Augumented Lagrange"
-                lambda_old = approach.lambda.meaning;            
-                [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);            
-                approach.lambda.converge = norm(lambda_next-lambda_old) / approach.penalty < gapTol;
-                approach.lambda.meaning = lambda_next;
-            
-            else
-                approach.lambda.converge = true;
-            end
+                end
 
+                if approach.Name == "Augumented Lagrange"
+                    lambda_old = approach.lambda.meaning;            
+                    [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);            
+                    approach.lambda.converge = norm(lambda_next-lambda_old) / approach.penalty < tol*10;
+                    approach.lambda.meaning = lambda_next;
+                
+                else
+                    approach.lambda.converge = true;
+                end                
         end
 
-    Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number) 
-    Body2 = SaveResults(Body2,ii,"last");
+        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number) 
+        Body2 = SaveResults(Body2,ii,"last");
 
 end
 % %##################### Post-Processing ######################
