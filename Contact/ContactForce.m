@@ -1,5 +1,6 @@
-function Fc = ContactForce(ContactBody,TargetBody,approach,ContactPointfunc)
+function Fc = ContactForce(ContactBody,TargetBody,approach)
     
+    ContactPointfunc = approach.ContactPointfunc;
     penalty = approach.penalty;
     Name = approach.Name;
 
@@ -9,7 +10,8 @@ function Fc = ContactForce(ContactBody,TargetBody,approach,ContactPointfunc)
     Ftarg = zeros(TargetBody.nx,1);
 
     [ContactPoints, ContactPointsElements] = ContactPointfunc(ContactBody);
-    [count, ContactGeometry, TargetGeometry, Gaps, Normals] = Projection(ContactPoints,ContactPointsElements,ContactBody,TargetBody); 
+
+    [count,ContactGeometry, TargetGeometry, Gaps, Normals] = Projection(ContactPoints,ContactPointsElements,ContactBody,TargetBody); 
 
     if count~=0 % we have contact
         
@@ -26,12 +28,13 @@ function Fc = ContactForce(ContactBody,TargetBody,approach,ContactPointfunc)
             Normal_targ =  Normal; 
             
             % penalty approach
-            if (Name == "Penalty") || (Name == "Augumented Lagrange")
+            if Name == "Penalty"
             
                % calculation of the forces applied to the nodes of contact elemnet 
                Fcont_loc = penalty * Gap * Normal_cont;                                                                              
                Ftarg_loc = penalty * Gap * Normal_targ; 
-               
+
+          
             % Nitsche approaches   
             elseif contains(Name, "Nitshe")
                
@@ -42,8 +45,8 @@ function Fc = ContactForce(ContactBody,TargetBody,approach,ContactPointfunc)
                Sigma_cont = Sigma_2412(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont(1),xi_cont(2));
                
                % Traget
-               X_targ = ContactGeometry.Coords(:,i);
-               U_targ = ContactGeometry.Disp(:,i);
+               X_targ = TargetGeometry.Coords(:,i);
+               U_targ = TargetGeometry.Disp(:,i);
                Sigma_targ = Sigma_2412(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ(1),xi_targ(2));
                                                    
                % Normal force difference  

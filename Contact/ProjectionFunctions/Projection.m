@@ -1,5 +1,5 @@
-function [count, ContactGeometry, TargetGeometry, Gap, Normal] = Projection(ContactPoints,ContactPointsElements,ContactBody,TargetBody)
-    
+function [count,ContactGeometry, TargetGeometry, Gap, Normal] = Projection(ContactPoints,ContactPointsElements,ContactBody,TargetBody)
+
     nloc_cont = ContactBody.nloc;
     xloc_cont = ContactBody.xloc;
 
@@ -26,8 +26,7 @@ function [count, ContactGeometry, TargetGeometry, Gap, Normal] = Projection(Cont
         nloc_targ = TargetBody.nloc;
         
         % Checking the condition of the penalty approach
-        if Outcome.Gap < 0 % we have meaningful results after the search
-        
+        if Outcome.Gap < 0 % we have meaningful results after the search         
             % negative because after penetration direction is from contact point
             % to its projection, which is an opposite to the outwards normal
             

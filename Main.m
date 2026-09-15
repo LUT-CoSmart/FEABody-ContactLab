@@ -20,11 +20,11 @@ Body2.shift.x = 0;
 Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
-dx1 = 8;
+dx1 = 5;
 dy1 = 2;
 
 dx2 = 10;
-dy2 = 4;
+dy2 = 2;
 
 Body1.nElems.x = dx1;
 Body1.nElems.y = dy1;
@@ -88,7 +88,7 @@ approachBasis = "Penalty";
 % Subtypes
 % Penalty: Penalty, Nitshe-linear, Nitshe-nonlinear, Nitshe-nonlinear-all, Augumented Lagrange (Lagrange here is questionable, but makes implemnetation easier)   
 % Lagrange: Lagrange, perturbed Lagrange
-approachSubtype = "Nitshe-nonlinear"; 
+approachSubtype = "Augumented Lagrange"; 
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
@@ -102,6 +102,13 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 approach = ApproachSettings(approachBasis, approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation);
 
+if approachSubtype == "Augumented Lagrange"
+    gapTol = 1e-3;
+    [InitialContactPoints,~] = ContactPointfunc(Body1);
+    approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
+else
+    approach.lambda.meaning = [];
+end
 %##################### Newton iter. parameters ######################
 imax=20; 
 tol=1e-3;   
@@ -113,9 +120,7 @@ total_steps = 0;
 titertot=0;  
 for ii = 1:steps
         
-        approach.lambda.converge = false;
-        approach.lambda.meaning = zeros(Body1.ndof+Body2.ndof,1);        
-
+        approach.lambda.converge = false;      
         Body1 = CreateFext(ii,steps,Body1,type);
         Body2 = CreateFext(ii,steps,Body2,type);
    
@@ -131,7 +136,7 @@ for ii = 1:steps
                 Body1 = Elastic(Body1);
                 Body2 = Elastic(Body2);
 
-                [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(Solution,Body1, Body2, DofsFunction, Stiffness,approach);
+                [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(Solution,Body1, Body2, DofsFunction,Stiffness,approach);
               
                 titer=toc;
                 titertot=titertot+titer;
@@ -141,10 +146,13 @@ for ii = 1:steps
                 end  
             end
 
-            if approachSubtype == "Augumented Lagrange"
-                approach.lambda.converge = ( all(abs(lambda_next - approach.lambda.meaning) < tol ) || Gap < tol*1e1); 
+            if approach.Name == "Augumented Lagrange"
+                lambda_old = approach.lambda.meaning;            
+                [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);            
+                approach.lambda.converge = norm(lambda_next-lambda_old) / approach.penalty < gapTol;
                 approach.lambda.meaning = lambda_next;
-            else 
+            
+            else
                 approach.lambda.converge = true;
             end
 

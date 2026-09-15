@@ -39,15 +39,10 @@ function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(Solution,Body1,Body
                      Stiffness_bc  Matrix_add]; 
             ff_bc = [ff_bc; zeros(m,1)];
             
-        otherwise % "Penalty" and "None"
+        otherwise
             ff_bc = ff_bc + DofsFunction(bc);
             K_bc = Ke_bc + Stiffness(bc,bc);
             
-            if Name == "Augumented Lagrange"
-                ff_bc = ff_bc + lambda; % contributions from the updated contact forces after the previous iteration
-                lambda = lambda + DofsFunction(bc); 
-            end
-
     end    
     
     if Solution == "Newton-Rapson"
