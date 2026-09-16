@@ -9,7 +9,12 @@ function [DofsFunction,Stiffness] = Contact(Body1,Body2,approach,step,Solution)
         %% TODO: combine these two together    
         if approach.Name == "Augumented Lagrange"             
             % lambda_old from Current input of approach
-            AimFunction = @(Body1,Body2) AugmentedContactForce(Body1,Body2,approach);
+            AimFunction = @(Body1,Body2) AugmentedContactForce(Body1,Body2,approach); 
+
+        elseif approach.Name == "Nitsche"             
+            % lambda_old from Current input of approach
+            AimFunction = @(Body1,Body2) NitscheContactForce_bulk(Body1,Body2,approach);     
+            
         else
             AimFunction = approach.AimFunction;
         end

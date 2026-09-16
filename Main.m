@@ -1,10 +1,6 @@
 clc, clear, close all
 format long;
-addpath("ElementFunctions");
-addpath("Forces")
-addpath("Meshing")
-addpath("ProcessAnalysis")
-addpath("Contact")
+addpath(genpath(pwd));
 
 %########## Reads element's data ###############################
 ElementData;   
@@ -86,33 +82,34 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 % Options: None, Penalty, Lagrange
 approachBasis = "Penalty"; 
 % Subtypes
-% Penalty: Penalty, Nitshe-linear, Nitshe-nonlinear, Nitshe-nonlinear-all, Augumented Lagrange (Lagrange here is questionable, but makes implemnetation easier)   
+% Penalty: Penalty, Nitsche, Augumented Lagrange  
 % Lagrange: Lagrange, perturbed Lagrange
-approachSubtype = "Augumented Lagrange"; 
+
+approachSubtype = "Nitsche";
+
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
-PointsofInterest.n = 2; % number of points per segment (Gauss & LinSpace points)
+PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
 % For Lagrange-based methods, a large number of contact points can lead to an overconstrained solution.
 % The reasoning is as follows. The points can be projected over several elements of the target body, which shape functions are linear.
 % That makes several consequenced elements be in one line. The same reason is to have coarser mesh for the contact body than the target one.  
 % ==============================================================================================================
-backtrack = true; % staring back track for the best solution to find an equlibrium
+backtrack = false; % staring back track for the best solution to find an equlibrium
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 approach = ApproachSettings(approachBasis, approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation,backtrack);
 
-if approachSubtype == "Augumented Lagrange"
+if approachSubtype == "Augumented Lagrange" || approachSubtype == "Nitsche"
     [InitialContactPoints,~] = ContactPointfunc(Body1);
     approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
-else
-    approach.lambda.meaning = [];
 end
+
 %##################### Newton iter. parameters ######################
 imax = 20; 
-tol=1e-4;   
+tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 1;
+steps= 10;
 Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 % %#################### Processing ######################
 
@@ -162,11 +159,11 @@ for ii = 1:steps
 
                 end
 
-                if approach.Name == "Augumented Lagrange"
-                    lambda_old = approach.lambda.meaning;            
-                    [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);            
-                    approach.lambda.converge = norm(lambda_next-lambda_old) / approach.penalty < tol*10;
-                    approach.lambda.meaning = lambda_next;
+                if approach.Name == "Augumented Lagrange" || approachSubtype == "Nitsche"
+                   lambda_old = approach.lambda.meaning;            
+                   [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);            
+                   approach.lambda.converge = norm(lambda_next-lambda_old) / approach.penalty < tol*10;
+                   approach.lambda.meaning = lambda_next;
                 
                 else
                     approach.lambda.converge = true;
