@@ -1,10 +1,12 @@
-function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation,backtrack)
+function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
+                                     GapfuncPairs, Perturbation,backtrack,PointsofInterest)
     
     approach.lambda.meaning = [];
     approach.penalty =1e9;  
     approach.perturbation = Perturbation;
     approach.ContactPointfunc = ContactPointfunc; % for augumented lagrange
-    
+    approach.numberOfPoints = PointsofInterest.n;
+
     % sanity check, that approach and subtype are correlating 
     if approachBasis == "Lagrange"
        backtrack = false;
@@ -21,7 +23,7 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
 
     elseif approachBasis == "Penalty"
         
-        allowed = ["Penalty", "Nitsche", "Augumented Lagrange"];
+        allowed = ["Penalty", "Nitsche", "penalty-Nitsche", "Augumented Lagrange"];
         
              
         if ~any(approachSubtype == allowed)
@@ -38,14 +40,17 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
             approach.penalty = 1e7;  % decreasing parameter for better stability, method operates with any small penalty 
             AimFunction = @(Body1,Body2) AugmentedContactForce(Body1,Body2,approach);
 
-        elseif approachSubtype == "Nitsche"
-            backtrack = false;
-            warning("backtrack is off for this set up");
-            approach.gapTolerance = 1e-4;
-            AimFunction = @(Body1,Body2) NitscheContactForce_bulk(Body1,Body2,approach);
+        elseif approachSubtype == "penalty-Nitsche"
+            %warning("backtrack is off for this set up");
+            approach.gapTolerance = 1e-3;
+            AimFunction = @(Body1,Body2) PenaltyNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"
             AimFunction = @(Body1,Body2) PenaltyContactForce(Body1,Body2,approach);
+        
+        elseif approachSubtype == "Nitsche"
+            AimFunction = @(Body1,Body2) NitscheContactForce(Body1,Body2,approach);
+
 
         end
                     

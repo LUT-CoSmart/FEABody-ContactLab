@@ -82,13 +82,13 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 % Options: None, Penalty, Lagrange
 approachBasis = "Penalty"; 
 % Subtypes
-% Penalty: Penalty, Nitsche, penalty-Nitsche, Augumented Lagrange  
+% Penalty: Penalty, Nitsche, Augumented Lagrange  
 % Lagrange: Lagrange, perturbed Lagrange
 
-approachSubtype = "penalty-Nitsche";
+approachSubtype = "Nitsche2";
 
-PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
-PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
+PointsofInterest.Name = "LinSpace"; % options: "nodes", "Gauss", "LinSpace" 
+PointsofInterest.n =1; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
 % For Lagrange-based methods, a large number of contact points can lead to an overconstrained solution.
@@ -96,19 +96,18 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 % That makes several consequenced elements be in one line. The same reason is to have coarser mesh for the contact body than the target one.  
 % ==============================================================================================================
 
-backtrack = true; % staring back track for the best solution to find an equlibrium
+backtrack = false; % staring back track for the best solution to find an equlibrium
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
-approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                            GapfuncPairs,Perturbation,backtrack,PointsofInterest);
+approach = ApproachSettings(approachBasis, approachSubtype,ContactPointfunc, GapfuncPairs, Perturbation,backtrack);
 
-if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche"
+if approachSubtype == "Augumented Lagrange" || approachSubtype == "Nitsche"
     [InitialContactPoints,~] = ContactPointfunc(Body1);
     approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
 end
 
 %##################### Newton iter. parameters ######################
-imax = 10; 
+imax = 20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
 steps= 10;
@@ -166,13 +165,11 @@ for ii = 1:steps
                     [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);
                     approach.lambda.converge = norm(lambda_next-lambda_old)/max(approach.penalty,norm(lambda_next)) < tol*10;
                     approach.lambda.meaning = lambda_next;
-
-                elseif approach.Name == "penalty-Nitsche"
+                elseif approach.Name == "Nitsche"
                     pn_old = approach.lambda.meaning;
-                    [~,pn_next] = PenaltyNitscheContactForce(Body1,Body2,approach);
-                    approach.lambda.converge = norm(pn_next-pn_old)/max(approach.penalty,norm(pn_next)) < approach.gapTolerance;
+                    [~,pn_next] = NitscheContactForce_bulk(Body1,Body2,approach);
+                    approach.lambda.converge = norm(pn_next-pn_old)/max(approach.penalty,norm(pn_next)) < tol;
                     approach.lambda.meaning = pn_next;
-
                 else
                     approach.lambda.converge = true;
                 end                
