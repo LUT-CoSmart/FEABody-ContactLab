@@ -53,7 +53,7 @@ Body2 = CreateBC(Body2);
 %##################### Loadings ######################
 % local positions (assuming all bodies in (0,0) )
 Body1.Fext.x = 0; 
-Body1.Fext.y = -62.5*10^(6);
+Body1.Fext.y = -62.5*10^(6) * 3;
 
 Body1.Fext.loc.x = Body1.Lx;
 Body1.Fext.loc.y = 'all';
@@ -88,16 +88,14 @@ Body2.contact.loc.y = Body2.Ly;
 Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
-% Options: None, Penalty, Lagrange
-approachBasis = "Penalty"; 
-% Subtypes
-% Penalty: Penalty, Nitsche, penalty-Nitsche, Augumented Lagrange, Augmented Nitsche
-% Lagrange: Lagrange, perturbed Lagrange
+approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
+approachSubtype = "Augumented Lagrange"; % Subtypes
+                                         % Penalty: Penalty, Augumented Lagrange,
+                                         %          Nitsche, penalty-Nitsche,  Augmented Nitsche
+                                         % Lagrange: Lagrange, perturbed Lagrange
 
-approachSubtype = "Penalty";
-
-PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
-PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
+PointsofInterest.Name = "Gauss"; % options: "nodes", "Gauss", "LinSpace" 
+PointsofInterest.n = 2; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
 % For Lagrange-based methods, a large number of contact points can lead to an overconstrained solution.
@@ -117,10 +115,10 @@ if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsc
 end
 
 %##################### Newton iter. parameters ######################
-imax = 10; 
+imax = 20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 10;
+steps= 20;
 Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 % %#################### Processing ######################
 
@@ -173,23 +171,19 @@ for ii = 1:steps
                 if approach.Name == "Augumented Lagrange"
                     lambda_old = approach.lambda.meaning;
                     [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);
-                    approach.lambda.converge = norm(lambda_next-lambda_old)/max(approach.penalty,norm(lambda_next)) < tol*10;
+                    approach.lambda.converge = norm(lambda_next-lambda_old)/max(approach.penalty,norm(lambda_next)) < tol;
                     approach.lambda.meaning = lambda_next;
 
                 elseif approach.Name == "penalty-Nitsche"
                     pn_old = approach.lambda.meaning;
-                    [~,pn_next,maxPenetration] = PenaltyNitscheContactForce(Body1,Body2,approach);
-                    % Relative change of penalty coefficients
-                    penaltyChange = norm(pn_next-pn_old,inf) / max(1,norm(pn_next,inf));
-                    penaltyConverged = penaltyChange < approach.penaltyTolerance;            
-                    gapConverged = maxPenetration <= approach.gapTolerance;            
-                    approach.lambda.converge = penaltyConverged && gapConverged;            
+                    [~,pn_next,maxPenetration] = PenaltyNitscheContactForce(Body1,Body2,approach);                       
+                    approach.lambda.converge = norm(pn_next-pn_old) / max(1,norm(pn_next)) < tol; % Relative change of penalty coefficients            
                     approach.lambda.meaning = pn_next;
                     
                 elseif approach.Name == "Augmented Nitsche"
                     q_old = approach.lambda.meaning;                
                     [~,q_next] = AugmentedNitscheContactForce(Body1,Body2,approach);                
-                    approach.lambda.converge = norm(q_next-q_old)  < approach.pressureTolerance;                             
+                    approach.lambda.converge = norm(q_next-q_old)  < tol;                             
                     approach.lambda.meaning = q_next;
 
                 else

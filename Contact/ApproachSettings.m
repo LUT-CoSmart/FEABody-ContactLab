@@ -42,15 +42,12 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
         elseif approachSubtype == "penalty-Nitsche"
             backtrack = false;
             warning("backtrack is off for this set up");
-            approach.gapTolerance = 1e-3;
-            approach.penaltyTolerance = 1e-6;
+            approach.gapTolerance = 2e-4;
             AimFunction = @(Body1,Body2) PenaltyNitscheContactForce(Body1,Body2,approach);
             
         elseif approachSubtype == "Augmented Nitsche"
             backtrack = false;
-            warning("backtrack is off for this set up");
-            approach.pressureTolerance = 1e-3;
-            approach.nitscheRelaxation = 0.8;        
+            warning("backtrack is off for this set up");            
             AimFunction = @(Body1,Body2) AugmentedNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"

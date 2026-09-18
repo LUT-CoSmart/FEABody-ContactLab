@@ -50,20 +50,26 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         dsigma_cont = 0.5*dsigma_cont;
         dsigma_targ = 0.5*dsigma_targ;
         
-        % signedGap < 0 means penetration
-        penetration = -signedGap;
-        augmentedPressure = max(0,lambda_old(i) + penetration/gamma); % standard we try that gap-sigma*gamma ~ 0
-                                                                      % here, sigma-> lambda_before + penetration/gamma   
-        lambda_trial(i) = augmentedPressure; % it goes out anyway, here slowly adjust till standard condition is fullfiled
-
-        Fcont_loc =augmentedPressure*Nm_cont.'*Normal_cont - gamma*(augmentedPressure-sigma_nn)*dsigma_cont;
-        Ftarg_loc =augmentedPressure*Nm_targ.'*Normal_targ - gamma*(augmentedPressure-sigma_nn)*dsigma_targ;
-
+        % Positive compressive pressure; negative gap means penetration.
+        augmentedPressure = max(0,lambda_old(i)-signedGap/gamma);
+        
+        % Relax only the outer multiplier update.
+        lambda_trial(i) = augmentedPressure;
+        
+        % sigma_nn is tension-positive:
+        % pressure-stress agreement means augmentedPressure + sigma_nn = 0.
+        stressMismatch = augmentedPressure + sigma_nn;
+        
+        Fcont_loc = augmentedPressure*(Nm_cont.'*Normal_cont) - gamma*stressMismatch*dsigma_cont;       
+        Ftarg_loc = augmentedPressure*(Nm_targ.'*Normal_targ) - gamma*stressMismatch*dsigma_targ;
+        
+        % Redistribution over the nodes
         DOFpositions_cont = ContactBody.xloc(element_cont,:);
         DOFpositions_targ = TargetBody.xloc(element_targ,:);
         
         Fcont(DOFpositions_cont) = Fcont(DOFpositions_cont)+Fcont_loc*area;% *area here improves convergence
         Ftarg(DOFpositions_targ) = Ftarg(DOFpositions_targ)+Ftarg_loc*area;
+
 
     end
 
