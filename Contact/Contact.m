@@ -32,7 +32,7 @@ function [DofsFunction,Stiffness] = Contact(Body1,Body2,approach,step,Solution)
                     Stiffness = numjac(DofsFunction_y,0,[Body1.u(:);Body2.u(:)], DofsFunction,1e-3,[]);
     
                 case "incremental"
-                    Stiffness = Jac_stepwise(Body1,Body2,AimFunction);
+                    Stiffness = Jacobian_Im(Body1,Body2,AimFunction);
             end
         end    
     end

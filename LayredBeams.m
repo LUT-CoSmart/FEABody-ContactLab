@@ -5,13 +5,22 @@ addpath(genpath(pwd));
 %########## Reads element's data ###############################
 ElementData;   
 
-%########## Reads problem's data ###############################
-ProblemData;
-
 %########## Element positioning (from (0.0) coord. ) ###########
+% Body 1
+Body1.Lx = 2;
+Body1.Ly = 0.5;
+Body1.Lz = 0.1;
+Body1.E=2.07e11;
+Body1.nu=0.3;
 Body1.shift.x = 0;
 Body1.shift.y = 0;
 
+% Body 2
+Body2.Lx = 2;
+Body2.Ly = 0.5;
+Body2.Lz = 0.1;
+Body2.E=2.07e11;
+Body2.nu=0.3;
 Body2.shift.x = 0;
 Body2.shift.y = -Body2.Ly;
 
@@ -85,7 +94,7 @@ approachBasis = "Penalty";
 % Penalty: Penalty, Nitsche, penalty-Nitsche, Augumented Lagrange, Augmented Nitsche
 % Lagrange: Lagrange, perturbed Lagrange
 
-approachSubtype = "Augmented Nitsche";
+approachSubtype = "Penalty";
 
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
