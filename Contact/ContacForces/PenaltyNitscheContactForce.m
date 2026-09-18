@@ -1,4 +1,6 @@
-function [Fc,pn_trial] = PenaltyNitscheContactForce(ContactBody,TargetBody,approach)
+function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,TargetBody,approach)
+    
+    maxPenetration = 0;
 
     ContactPointfunc = approach.ContactPointfunc; 
     pn_old = approach.lambda.meaning; 
@@ -27,11 +29,15 @@ function [Fc,pn_trial] = PenaltyNitscheContactForce(ContactBody,TargetBody,appro
         end 
 
         signedGap = Outcome.Gap; 
+
+        penetration = max(0,-signedGap);
+        maxPenetration = max(maxPenetration,penetration);
+
         Normal = Outcome.Normal(:); 
         Normal_cont = -Normal; 
         Normal_targ = Normal;
 
-        area = ContactBody.Lx/ContactBody.nElems.x*ContactBody.Lz/approach.numberOfPoints; % rude assesment
+        area = ContactBody.Lx/ContactBody.nElems.x*ContactBody.Lz/approach.numberOfPoints;
 
         % Contact element 
         element_cont = ContactPointsElements(i); 
@@ -52,37 +58,36 @@ function [Fc,pn_trial] = PenaltyNitscheContactForce(ContactBody,TargetBody,appro
         nabla_Sigma_nn_targ = NablaSigma_NN(TargetBody.E,TargetBody.nu,U_targ,X_targ,xivec_targ,Normal_targ); 
         nabla_sigma_targ = 0.5*nabla_Sigma_nn_targ; 
         
-        % Integrated compression-positive bulk stress 
-        sigma = 0.5*(sigma_nn_cont+sigma_nn_targ)*area; 
+        sigma = 0.5*(sigma_nn_cont+sigma_nn_targ); % it is bulk stress, supposed to be positive
+        
+        % Update penalty only when actual penetration exceeds tolerance
+        if penetration > gapTolerance
+        
+            pn_target_gap = pn_old(i)* penetration/gapTolerance;
+            pn_target_sigma = max(0,sigma)/gapTolerance;  % if sigma negative     
+            pn_target = max(pn_target_gap,pn_target_sigma);
+            pn_trial(i) = min(10*pn_old(i),pn_target); % just to slow down
+        
+        else 
+            pn_trial(i) = pn_old(i); % geometrical tolerance - done
+        
+        end
 
-        % Target penalty and current Nitsche contribution 
-        if sigma > 0 
-            pn_target = abs(sigma)/gapTolerance; % we assume that we hace compression and sigma is "-" 
-        else % just in case 
-            pn_target = pn_old(i); 
-        end 
-
-        % Projected contact force 
-        pressure = max(0,-pn_old(i)*signedGap); % as soon as we reach desired condtion sigma-pn*gap is fullfiled automatically  from the condition of the target gap 
+        pressure = max(0,sigma-pn_old(i)*signedGap); % signedGap < 0
         if pressure == 0 
             continue
         end 
         
-        % Penalty proposed for the next outer iteration 
-        if pn_old(i) < pn_target 
-            pn_trial(i) = min(10*pn_old(i),pn_target); 
-        end 
         
-        % Local Nitsche force vectors 
-         
-        Fcont_loc = pressure*Normal_cont + signedGap*nabla_sigma_cont*area; 
-        Ftarg_loc = pressure*Normal_targ + signedGap*nabla_sigma_targ*area; 
+        % Local Nitsche force vectors         
+        Fcont_loc = pressure*Normal_cont + signedGap*nabla_sigma_cont; 
+        Ftarg_loc = pressure*Normal_targ + signedGap*nabla_sigma_targ; 
                       
         DOFpositions_cont = ContactBody.xloc(element_cont,:); 
         DOFpositions_targ = TargetBody.xloc(element_targ,:); 
        
-        Fcont(DOFpositions_cont) = Fcont(DOFpositions_cont)+Nm_2412(xi_cont,eta_cont)'*Fcont_loc; 
-        Ftarg(DOFpositions_targ) = Ftarg(DOFpositions_targ)+Nm_2412(xi_targ,eta_targ)'*Ftarg_loc; 
+        Fcont(DOFpositions_cont) = Fcont(DOFpositions_cont)+Nm_2412(xi_cont,eta_cont)'*Fcont_loc*area; 
+        Ftarg(DOFpositions_targ) = Ftarg(DOFpositions_targ)+Nm_2412(xi_targ,eta_targ)'*Ftarg_loc*area; 
 
     end 
 

@@ -1,4 +1,4 @@
-function Fc = NitscheContactForce(ContactBody,TargetBody,approach)
+function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody,approach)
     ContactPointfunc = approach.ContactPointfunc;
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
@@ -8,19 +8,26 @@ function Fc = NitscheContactForce(ContactBody,TargetBody,approach)
     area = ContactBody.Lx/ContactBody.nElems.x*ContactBody.Lz/approach.numberOfPoints;
     gamma = area/approach.penalty;
 
+    lambda_old = approach.lambda.meaning;
+    if isempty(lambda_old) || length(lambda_old) ~= numberOfPoints
+        lambda_old = zeros(numberOfPoints,1);
+    end
+    lambda_trial = lambda_old;
+
     for i = 1:numberOfPoints
         ContactPoint = ContactPoints(i,:);
         Outcome = FindPoint(TargetBody,ContactPoint);
-        
+
         if ~isfield(Outcome,"Index")
+            lambda_trial(i) = 0;
             continue
         end
-        
+
         signedGap = Outcome.Gap; % it is negative for penetration
         Normal = Outcome.Normal(:);
         Normal_cont = -Normal;
         Normal_targ = Normal;
-        
+       
         % contact
         element_cont = ContactPointsElements(i);
         [X_cont,U_cont] = GetCoorDisp(element_cont,ContactBody.nloc,ContactBody.P0,ContactBody.u);
@@ -38,18 +45,20 @@ function Fc = NitscheContactForce(ContactBody,TargetBody,approach)
         Sigma_targ = Sigma_2412(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ);
         sigma_nn_targ = Normal_targ.'*Sigma_targ*Normal_targ;
         dsigma_targ = NormalStressDerivative_Im(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,Normal_targ);
-        
+
         sigma_nn = 0.5*(sigma_nn_cont+sigma_nn_targ); % likely it will be positive
         dsigma_cont = 0.5*dsigma_cont;
         dsigma_targ = 0.5*dsigma_targ;
         
+        % signedGap < 0 means penetration
         penetration = -signedGap;
-        Pgamma = penetration-gamma*sigma_nn;
-        Pgamma = max(0,Pgamma); % this is from (Chouly et. al. 2012)
-        
-        Fcont_loc = -gamma*sigma_nn*dsigma_cont+(Pgamma/gamma)*(Nm_cont.'*Normal_cont-gamma*dsigma_cont);
-        Ftarg_loc = -gamma*sigma_nn*dsigma_targ+(Pgamma/gamma)*(Nm_targ.'*Normal_targ-gamma*dsigma_targ);
-        
+        augmentedPressure = max(0,lambda_old(i) + penetration/gamma); % standard we try that gap-sigma*gamma ~ 0
+                                                                      % here, sigma-> lambda_before + penetration/gamma   
+        lambda_trial(i) = augmentedPressure; % it goes out anyway, here slowly adjust till standard condition is fullfiled
+
+        Fcont_loc =augmentedPressure*Nm_cont.'*Normal_cont - gamma*(augmentedPressure-sigma_nn)*dsigma_cont;
+        Ftarg_loc =augmentedPressure*Nm_targ.'*Normal_targ - gamma*(augmentedPressure-sigma_nn)*dsigma_targ;
+
         DOFpositions_cont = ContactBody.xloc(element_cont,:);
         DOFpositions_targ = TargetBody.xloc(element_targ,:);
         
@@ -59,4 +68,5 @@ function Fc = NitscheContactForce(ContactBody,TargetBody,approach)
     end
 
     Fc = [Fcont;Ftarg];
+
 end

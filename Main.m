@@ -82,10 +82,10 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 % Options: None, Penalty, Lagrange
 approachBasis = "Penalty"; 
 % Subtypes
-% Penalty: Penalty, Nitsche, penalty-Nitsche, Augumented Lagrange  
+% Penalty: Penalty, Nitsche, penalty-Nitsche, Augumented Lagrange, Augmented Nitsche
 % Lagrange: Lagrange, perturbed Lagrange
 
-approachSubtype = "penalty-Nitsche";
+approachSubtype = "Augmented Nitsche";
 
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
@@ -102,7 +102,7 @@ Perturbation = "automatic"; % Options: "automatic", "incremental"
 approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
                             GapfuncPairs,Perturbation,backtrack,PointsofInterest);
 
-if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche"
+if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augmented Nitsche"  
     [InitialContactPoints,~] = ContactPointfunc(Body1);
     approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
 end
@@ -169,9 +169,19 @@ for ii = 1:steps
 
                 elseif approach.Name == "penalty-Nitsche"
                     pn_old = approach.lambda.meaning;
-                    [~,pn_next] = PenaltyNitscheContactForce(Body1,Body2,approach);
-                    approach.lambda.converge = norm(pn_next-pn_old)/max(approach.penalty,norm(pn_next)) < approach.gapTolerance;
+                    [~,pn_next,maxPenetration] = PenaltyNitscheContactForce(Body1,Body2,approach);
+                    % Relative change of penalty coefficients
+                    penaltyChange = norm(pn_next-pn_old,inf) / max(1,norm(pn_next,inf));
+                    penaltyConverged = penaltyChange < approach.penaltyTolerance;            
+                    gapConverged = maxPenetration <= approach.gapTolerance;            
+                    approach.lambda.converge = penaltyConverged && gapConverged;            
                     approach.lambda.meaning = pn_next;
+                    
+                elseif approach.Name == "Augmented Nitsche"
+                    q_old = approach.lambda.meaning;                
+                    [~,q_next] = AugmentedNitscheContactForce(Body1,Body2,approach);                
+                    approach.lambda.converge = norm(q_next-q_old)  < approach.pressureTolerance;                             
+                    approach.lambda.meaning = q_next;
 
                 else
                     approach.lambda.converge = true;
