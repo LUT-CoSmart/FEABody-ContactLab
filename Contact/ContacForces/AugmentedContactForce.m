@@ -32,9 +32,6 @@ function [Fc,lambda_trial] = AugmentedContactForce(ContactBody,TargetBody,approa
         end
 
         signedGap = Outcome.Gap;
-
-        % Penetration: signedGap < 0 -> pressure increases.
-        % Separation:  signedGap > 0 -> pressure decreases.
         lambda_trial(i) = max(0, lambda_old(i) - penalty*signedGap);
 
         if lambda_trial(i) == 0
@@ -57,17 +54,14 @@ function [Fc,lambda_trial] = AugmentedContactForce(ContactBody,TargetBody,approa
         [X_targ,U_targ] = GetCoorDisp(element_targ,TargetBody.nloc,TargetBody.P0,TargetBody.u);
         [xi_targ,eta_targ] = FindIsoCoord(X_targ,U_targ,Outcome.Position);
 
-        pressure = lambda_trial(i);
-
-        Fcont_loc = pressure*Normal_cont;
-        Ftarg_loc = pressure*Normal_targ;
+        Fcont_loc =  lambda_trial(i)*Normal_cont;
+        Ftarg_loc =  lambda_trial(i)*Normal_targ;
 
         DOFpositions_cont = ContactBody.xloc(element_cont,:);
-
         DOFpositions_targ = TargetBody.xloc(element_targ,:);
 
         Fcont(DOFpositions_cont) = Fcont(DOFpositions_cont)+ Nm_2412(xi_cont,eta_cont)'*Fcont_loc;
-        Ftarg(DOFpositions_targ) =Ftarg(DOFpositions_targ)  + Nm_2412(xi_targ,eta_targ)'*Ftarg_loc;
+        Ftarg(DOFpositions_targ) = Ftarg(DOFpositions_targ)+ Nm_2412(xi_targ,eta_targ)'*Ftarg_loc;
     end
 
     Fc = [Fcont;Ftarg];

@@ -91,7 +91,7 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "penalty-Nitsche"; % Subtypes
+approachSubtype = "Augmented Nitsche"; % Subtypes
                                          % Penalty: Penalty, Augumented Lagrange,
                                          %          Nitsche, penalty-Nitsche,  Augmented Nitsche
                                          % Lagrange: Lagrange, perturbed Lagrange
@@ -120,7 +120,7 @@ end
 imax = 20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 30;
+steps= 20;
 Solution = "Newton-Broyden"; % Options: Newton-Rapson, Newton-Broyden
 % %#################### Processing ######################
 

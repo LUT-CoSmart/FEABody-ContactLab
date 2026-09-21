@@ -53,19 +53,13 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         sigma_nn = 0.5*(sigma_nn_cont+sigma_nn_targ); % likely it will be positive
         dsigma_cont = 0.5*dsigma_cont;
         dsigma_targ = 0.5*dsigma_targ;
-        
-        % Positive compressive pressure; negative gap means penetration.
-        augmentedPressure = max(0,lambda_old(i)-signedGap/gamma);
-        
-        % Relax only the outer multiplier update.
-        lambda_trial(i) = augmentedPressure;
-        
-        % sigma_nn is tension-positive:
-        % pressure-stress agreement means augmentedPressure + sigma_nn = 0.
-        stressMismatch = augmentedPressure + sigma_nn;
-        
-        Fcont_loc = augmentedPressure*(Nm_cont.'*Normal_cont) - gamma*stressMismatch*dsigma_cont;       
-        Ftarg_loc = augmentedPressure*(Nm_targ.'*Normal_targ) - gamma*stressMismatch*dsigma_targ;
+                
+        % at the end: g ->0; lambda-> -sigma_nn
+        lambda_trial(i) = max(0,  0.5*(lambda_old(i) - signedGap/gamma - sigma_nn));           
+        stressMismatch = lambda_trial(i) + sigma_nn;
+         
+        Fcont_loc =  lambda_trial(i)*(Nm_cont.'*Normal_cont) - gamma*stressMismatch*dsigma_cont;       
+        Ftarg_loc =  lambda_trial(i)*(Nm_targ.'*Normal_targ) - gamma*stressMismatch*dsigma_targ;
         
         % Redistribution over the nodes
         DOFpositions_cont = ContactBody.xloc(element_cont,:);
