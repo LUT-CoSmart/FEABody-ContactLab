@@ -91,7 +91,7 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "Augmented Nitsche"; % Subtypes
+approachSubtype = "penalty-Nitsche";   % Subtypes
                                          % Penalty: Penalty, Augumented Lagrange,
                                          %          Nitsche, penalty-Nitsche,  Augmented Nitsche
                                          % Lagrange: Lagrange, perturbed Lagrange
@@ -104,12 +104,10 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 % The reasoning is as follows. The points can be projected over several elements of the target body, which shape functions are linear.
 % That makes several consequenced elements be in one line. The same reason is to have coarser mesh for the contact body than the target one.  
 % ==============================================================================================================
-
-backtrack = true; % staring back track for the best solution to find an equlibrium
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
-approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                            GapfuncPairs,Perturbation,backtrack,PointsofInterest);
+[approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
+                       GapfuncPairs,Perturbation,PointsofInterest);
 
 if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augmented Nitsche"  
     [InitialContactPoints,~] = ContactPointfunc(Body1);
@@ -120,7 +118,7 @@ end
 imax = 20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 20;
+steps= 10;
 Solution = "Newton-Broyden"; % Options: Newton-Rapson, Newton-Broyden
 % %#################### Processing ######################
 
@@ -135,7 +133,7 @@ for ii = 1:steps
         
         while (~approach.lambda.converge) % special case for Augumented Lagrange    
 
-                for lambdaBackTrack = approach.lambdaList % backtrack loop
+                for lambdaBackTrack = backtrack.lambdaList % backtrack loop
 
                     if lambdaBackTrack < 1
                         fprintf("!!! Starting  Backtrack for lambda = %f !!!! \n",lambdaBackTrack)            
@@ -173,7 +171,7 @@ for ii = 1:steps
                 if approach.Name == "Augumented Lagrange"
                     lambda_old = approach.lambda.meaning;
                     [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);
-                    approach.lambda.converge = norm(lambda_next-lambda_old)/max(approach.penalty,norm(lambda_next)) < tol;
+                    approach.lambda.converge = norm(lambda_next-lambda_old)/norm(lambda_next) < tol;
                     approach.lambda.meaning = lambda_next;
 
                 elseif approach.Name == "penalty-Nitsche"

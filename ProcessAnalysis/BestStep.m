@@ -2,7 +2,7 @@ function [Body1,Body2,Gap] = BestStep(bestStep,lambda,Gap,Body1,Body2,deltaf,ii,
        
     persistent deltaf_best Body1_best Body2_best Gap_best iteration
 
-    if bestStep   
+    if bestStep.meaning   
                
        delta =  norm(abs(deltaf)); 
        

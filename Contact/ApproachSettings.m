@@ -1,6 +1,6 @@
-function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                                     GapfuncPairs, Perturbation,backtrack,PointsofInterest)
+function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,GapfuncPairs, Perturbation,PointsofInterest)
     
+    backtrack.meaning = false;% staring back track for the best solution to find an equlibrium
     approach.lambda.meaning = [];
     approach.penalty =1e9;  
     approach.perturbation = Perturbation;
@@ -9,8 +9,6 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
 
     % sanity check, that approach and subtype are correlating 
     if approachBasis == "Lagrange"
-       backtrack = false;
-       warning("backtrack is off for this set up");
        allowed = ["Lagrange","perturbed Lagrange"];  
 
        if ~any(approachSubtype == allowed)
@@ -24,8 +22,7 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
     elseif approachBasis == "Penalty"
         
         allowed = ["Penalty", "Nitsche", "penalty-Nitsche", "Augmented Nitsche", "Augumented Lagrange"];
-        
-             
+                     
         if ~any(approachSubtype == allowed)
           warning("Invalid approachSubtype for approachBasis='Penalty, substituted to Penalty");
           approachSubtype = "Penalty";          
@@ -34,26 +31,23 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
         approach.Name = approachSubtype; 
 
         if approachSubtype == "Augumented Lagrange"
-            backtrack = false;
-            warning("backtrack is off for this set up");
             approach.penalty = 1e7;  % decreasing parameter for better stability, method operates with any small penalty 
             AimFunction = @(Body1,Body2) AugmentedContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "penalty-Nitsche"
-            backtrack = false;
-            warning("backtrack is off for this set up");
+            backtrack.meaning = true;
             approach.gapTolerance = 2e-4;
             AimFunction = @(Body1,Body2) PenaltyNitscheContactForce(Body1,Body2,approach);
             
-        elseif approachSubtype == "Augmented Nitsche"
-            backtrack = false;
-            warning("backtrack is off for this set up");            
+        elseif approachSubtype == "Augmented Nitsche"          
             AimFunction = @(Body1,Body2) AugmentedNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"
+            backtrack.meaning = true;
             AimFunction = @(Body1,Body2) PenaltyContactForce(Body1,Body2,approach);
         
         elseif approachSubtype == "Nitsche"
+            backtrack.meaning = true;
             AimFunction = @(Body1,Body2) NitscheContactForce(Body1,Body2,approach);
 
 
@@ -69,8 +63,8 @@ function approach = ApproachSettings(approachBasis,approachSubtype,ContactPointf
     approach.Type = approachBasis;   
     approach.AimFunction = AimFunction;
     
-    if backtrack 
-       approach.lambdaList  = [1.0, 0.5, 0.25, 0.125];   
+    if backtrack.meaning 
+       backtrack.lambdaList  = [1.0, 0.5, 0.25, 0.125];   
     else
-       approach.lambdaList = 1;
+       backtrack.lambdaList = 1;
     end
