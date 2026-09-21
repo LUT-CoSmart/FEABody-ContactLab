@@ -49,10 +49,10 @@ uuh=Nm*uu;
 % Interpolation for geometry (position)
 XXh=Nm*X;
 % Compute Je and its inverse JeInv
-Je = [diff(XXh(1),xi) diff(XXh(2),xi); diff(XXh(1),eta) diff(XXh(2),eta)]; 
+Je = jacobian(XXh,[xi,eta]); 
 JeInv = Je^(-1);
-% Strain matrix 
 nablau=jacobian(uuh,[xi,eta])*JeInv;
+F = eye(2) + nablau;
 EE=1/2*(nablau+nablau.'+nablau.'*nablau);
 % strain vector
 eps=[EE(1,1), EE(2,2), 2*EE(1,2)].'; 
@@ -78,20 +78,20 @@ for kk=1:8
     dFeS(kk)=diff(UdAS,uu(kk));
 end 
 
-
-% matlabFunction(dFe,'file','dFe_2412','vars',{E,nu,Lz,uu,X,xi,eta});
+% % matlabFunction(dFe,'file','dFe_2412','vars',{E,nu,Lz,uu,X,xi,eta});
 % matlabFunction(dFeV,'file','dFe_2412V','vars',{E,nu,Lz,uu,X,xi,eta});
 % matlabFunction(dFeS,'file','dFe_2412S','vars',{E,nu,Lz,uu,X,xi,eta});
 % matlabFunction(Nm,'file','Nm_2412','vars',{xi,eta});
 % matlabFunction(Nm_xi,'file','Nm_2412_xi','vars',{xi,eta});
 % matlabFunction(Nm_eta,'file','Nm_2412_eta','vars',{xi,eta});
 % matlabFunction(nablau,'file','nabla_u_2412','vars',{uu,X,xi,eta});
-
-sigma = DD * eps;
-Sigma = [sigma(1) sigma(3);
-         sigma(3) sigma(2)];
-
-nabla_sigma = jacobian(sigma,[xi,eta])*JeInv;
-
-matlabFunction(nabla_sigma,'file','nabla_sigma_2412','vars',{E,nu,uu,X,xi,eta});
-matlabFunction(Sigma,'file','Sigma_2412','vars',{E,nu,uu,X,xi,eta});
+% 
+% sigma = DD * eps;
+% Sigma = [sigma(1) sigma(3);
+%          sigma(3) sigma(2)];
+% 
+% nabla_sigma = jacobian(sigma,[xi,eta])*JeInv;
+% 
+% matlabFunction(nabla_sigma,'file','nabla_sigma_2412','vars',{E,nu,uu,X,xi,eta});
+% matlabFunction(Sigma,'file','Sigma_2412','vars',{E,nu,uu,X,xi,eta});
+% matlabFunction(F,'file','F_2412','vars',{uu,X,xi,eta});

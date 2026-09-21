@@ -7,7 +7,7 @@ Fe=zeros(8,1);
 
 for ii1=1:n_points
     for jj1=1:n_points
-        Fe=Fe+func(E,nu,Lz,U,X,xiv(ii1),etav(ii1))'*wxi(ii1)*weta(jj1);        
+        Fe=Fe+func(E,nu,Lz,U,X,xiv(ii1),etav(jj1))'*wxi(ii1)*weta(jj1);        
     end
 end
 
@@ -23,7 +23,7 @@ for jj = 1:8
     Feh=zeros(8,1);
     for ii1=1:n_points
         for jj1=1:n_points
-            Feh=Feh+func(E,nu,Lz,Uh,X,xiv(ii1),etav(ii1))'*wxi(ii1)*weta(jj1);
+            Feh=Feh+func(E,nu,Lz,Uh,X,xiv(ii1),etav(jj1))'*wxi(ii1)*weta(jj1);
         end
     end
 

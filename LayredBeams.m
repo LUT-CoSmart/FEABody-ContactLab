@@ -25,8 +25,8 @@ Body2.shift.x = 0;
 Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
-dx1 = 5;
-dy1 = 2;
+dx1 = 8;
+dy1 = 3;
 
 dx2 = 10;
 dy2 = 2;
@@ -53,7 +53,7 @@ Body2 = CreateBC(Body2);
 %##################### Loadings ######################
 % local positions (assuming all bodies in (0,0) )
 Body1.Fext.x = 0; 
-Body1.Fext.y = -62.5*10^(6) * 3;
+Body1.Fext.y = -62.5*10^(6)*2;
 
 Body1.Fext.loc.x = Body1.Lx;
 Body1.Fext.loc.y = 'all';
@@ -89,13 +89,13 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "Augumented Lagrange"; % Subtypes
+approachSubtype = "Nitsche"; % Subtypes
                                          % Penalty: Penalty, Augumented Lagrange,
                                          %          Nitsche, penalty-Nitsche,  Augmented Nitsche
                                          % Lagrange: Lagrange, perturbed Lagrange
 
 PointsofInterest.Name = "Gauss"; % options: "nodes", "Gauss", "LinSpace" 
-PointsofInterest.n = 2; % number of points per segment (Gauss & LinSpace points)
+PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
 % For Lagrange-based methods, a large number of contact points can lead to an overconstrained solution.
@@ -118,8 +118,8 @@ end
 imax = 20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 20;
-Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
+steps= 30;
+Solution = "Newton-Broyden"; % Options: Newton-Rapson, Newton-Broyden
 % %#################### Processing ######################
 
 total_steps = 0;

@@ -28,12 +28,14 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         Normal_cont = -Normal;
         Normal_targ = Normal;
        
-        % contact
+         % contact
         element_cont = ContactPointsElements(i);
         [X_cont,U_cont] = GetCoorDisp(element_cont,ContactBody.nloc,ContactBody.P0,ContactBody.u);
         [xi_cont,eta_cont] = FindIsoCoord(X_cont,U_cont,ContactPoint');
         Nm_cont = Nm_2412(xi_cont,eta_cont);
         Sigma_cont = Sigma_2412(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont,eta_cont);
+        F_cont = F_2412(U_cont,X_cont,xi_cont,eta_cont); 
+        Sigma_cont = 1/det(F_cont) * F_cont * Sigma_cont * F_cont';
         sigma_nn_cont = Normal_cont.'*Sigma_cont*Normal_cont;
         dsigma_cont = NormalStressDerivative_Im(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont,eta_cont,Normal_cont);
         
@@ -43,6 +45,8 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         [xi_targ,eta_targ] = FindIsoCoord(X_targ,U_targ,Outcome.Position);
         Nm_targ = Nm_2412(xi_targ,eta_targ);
         Sigma_targ = Sigma_2412(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ);
+        F_targ = F_2412(U_targ,X_targ,xi_targ,eta_targ); 
+        Sigma_targ = 1/det(F_targ) * F_targ * Sigma_targ * F_targ';
         sigma_nn_targ = Normal_targ.'*Sigma_targ*Normal_targ;
         dsigma_targ = NormalStressDerivative_Im(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,Normal_targ);
 
