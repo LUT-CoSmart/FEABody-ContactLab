@@ -1,4 +1,4 @@
-function K= Jac_stepwise(Body1,Body2,AimFunction)
+function K= Jacobian(Body1,Body2,AimFunction)
 
     nx = Body1.nx + Body2.nx;
     y0 = AimFunction(Body1,Body2);

@@ -84,14 +84,13 @@ end
 % matlabFunction(Nm,'file','Nm_2412','vars',{xi,eta});
 % matlabFunction(Nm_xi,'file','Nm_2412_xi','vars',{xi,eta});
 % matlabFunction(Nm_eta,'file','Nm_2412_eta','vars',{xi,eta});
-% matlabFunction(nablau,'file','nabla_u_2412','vars',{uu,X,xi,eta});
-% 
-% sigma = DD * eps;
-% Sigma = [sigma(1) sigma(3);
-%          sigma(3) sigma(2)];
-% 
-% nabla_sigma = jacobian(sigma,[xi,eta])*JeInv;
-% 
-% matlabFunction(nabla_sigma,'file','nabla_sigma_2412','vars',{E,nu,uu,X,xi,eta});
-% matlabFunction(Sigma,'file','Sigma_2412','vars',{E,nu,uu,X,xi,eta});
+% matlabFunction(nablau,'file','nabla_u_2412','vars',{uu,X,xi,eta}); 
 % matlabFunction(F,'file','F_2412','vars',{uu,X,xi,eta});
+
+sigma = DD * eps;
+Sigma = [sigma(1) sigma(3);
+         sigma(3) sigma(2)];
+nabla_sigma = jacobian(sigma,[xi,eta])*JeInv;
+
+matlabFunction(nabla_sigma,'file','nabla_sigma_2412','vars',{E,nu,uu,X,xi,eta});
+matlabFunction(Sigma,'file','Sigma_2412','vars',{E,nu,uu,X,xi,eta});

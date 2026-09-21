@@ -38,7 +38,7 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
         F_cont = F_2412(U_cont,X_cont,xi_cont,eta_cont); 
         Sigma_cont = 1/det(F_cont) * F_cont * Sigma_cont * F_cont';
         sigma_nn_cont = Normal_cont.'*Sigma_cont*Normal_cont;
-        dsigma_cont = NormalStressDerivative_Im(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont,eta_cont,Normal_cont);
+        dsigma_cont = NormalStressDerivative(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont,eta_cont,Normal_cont);
         
         % target
         element_targ = Outcome.Index;
@@ -49,40 +49,33 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
         F_targ = F_2412(U_targ,X_targ,xi_targ,eta_targ); 
         Sigma_targ = 1/det(F_targ) * F_targ * Sigma_targ * F_targ';
         sigma_nn_targ = Normal_targ.'*Sigma_targ*Normal_targ;
-        dsigma_targ = NormalStressDerivative_Im(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,Normal_targ);
+        dsigma_targ = NormalStressDerivative(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,Normal_targ);
 
         
-        sigma = 0.5*(sigma_nn_cont+sigma_nn_targ)*area; % likely it will be positive
+        sigma_nn = 0.5*(sigma_nn_cont + sigma_nn_targ);
         dsigma_cont = 0.5*dsigma_cont;
         dsigma_targ = 0.5*dsigma_targ;
+        
+        penetration = max(0, -signedGap);
+        
+        maxPenetration = max(maxPenetration, penetration);
+        
 
-        penetration = max(0,-signedGap);
-        if penetration == 0
-           continue
-        end 
-
-        maxPenetration = max(maxPenetration,penetration);
         if penetration > gapTolerance
-        
+
             pn_target_gap = pn_old(i)*penetration/gapTolerance;
-            pn_target_sigma = max(0,sigma)/gapTolerance;       
-            pn_target = max(pn_target_gap,pn_target_sigma);
-            pn_trial(i) = min(10*pn_old(i), max(pn_old(i),pn_target));
-
-        else
-            pn_trial(i) = pn_old(i);
+            pn_target_sigma = area*max(0, -sigma_nn)/gapTolerance;        
+            pn_target = max(pn_target_gap, pn_target_sigma);        
+            pn_trial(i) = min(10*pn_old(i), max(pn_old(i), pn_target));
         end
+                
+        gamma = area/pn_old(i);
+               
+        pressure = max(0, -sigma_nn - signedGap/gamma);
+                
+        Fcont_loc = area*(pressure*(Nm_cont.'*Normal_cont) - gamma*(sigma_nn + pressure)*dsigma_cont);        
+        Ftarg_loc = area*(pressure*(Nm_targ.'*Normal_targ) - gamma*(sigma_nn + pressure)*dsigma_targ);
 
-        pressure = max(0,sigma-pn_old(i)*signedGap); % signedGap < 0
-
-        if pressure == 0 
-            continue
-        end 
-        
-        % Local Nitsche force vectors         
-        Fcont_loc = pressure*(Nm_cont.'*Normal_cont) + signedGap*dsigma_cont*area;
-        Ftarg_loc = pressure*(Nm_targ.'*Normal_targ) + signedGap*dsigma_targ*area; 
-                     
         DOFpositions_cont = ContactBody.xloc(element_cont,:); 
         DOFpositions_targ = TargetBody.xloc(element_targ,:); 
        
@@ -92,4 +85,3 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
     end 
 
     Fc = [Fcont;Ftarg]; 
-end

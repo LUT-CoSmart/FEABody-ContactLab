@@ -3,7 +3,9 @@ format long;
 addpath(genpath(pwd));
 
 %########## Reads element's data ###############################
-ElementData;   
+ElemNodes=4;
+DofsAtNode=2;           
+ElemDofs=8;
 
 %########## Element positioning (from (0.0) coord. ) ###########
 % Body 1
@@ -89,7 +91,7 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "Nitsche"; % Subtypes
+approachSubtype = "penalty-Nitsche"; % Subtypes
                                          % Penalty: Penalty, Augumented Lagrange,
                                          %          Nitsche, penalty-Nitsche,  Augmented Nitsche
                                          % Lagrange: Lagrange, perturbed Lagrange
