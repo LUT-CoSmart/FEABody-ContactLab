@@ -5,23 +5,8 @@ function [DofsFunction,Stiffness] = Contact(Body1,Body2,approach,step,Solution)
     Stiffness = zeros(numel(DofsFunction),DOFsNumber);
 
     if approach.Type ~= "None"
-
-        %% TODO: combine these two together    
-        if approach.Name == "Augumented Lagrange"             
-            % lambda_old from Current input of approach
-            AimFunction = @(Body1,Body2) AugmentedContactForce(Body1,Body2,approach); 
-
-        elseif approach.Name == "penalty-Nitsche"             
-            % lambda_old from Current input of approach
-            AimFunction = @(Body1,Body2) PenaltyNitscheContactForce(Body1,Body2,approach);     
-
-        elseif approach.Name == "Augmented Nitsche"
-            AimFunction = @(Body1,Body2) AugmentedNitscheContactForce(Body1,Body2,approach);    
         
-        else
-            AimFunction = approach.AimFunction;
-        end
-
+        AimFunction = @(Body1,Body2) approach.AimFunction(Body1,Body2,approach);
         DofsFunction = AimFunction(Body1,Body2);
 
         if step == 1 || Solution == "Newton-Rapson" 

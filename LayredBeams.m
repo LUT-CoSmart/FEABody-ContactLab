@@ -2,10 +2,6 @@ clc, clear, close all
 format long;
 addpath(genpath(pwd));
 
-%########## Element's data ###############################
-% Element nodes = 4;
-DofsAtNode = 2;           
-
 %########## Element positioning (from (0.0) coord. ) ###########
 % Body 1
 Body1.Lx = 2;
@@ -38,21 +34,22 @@ Body1.nElems.y = dy1;
 Body2.nElems.x = dx2;
 Body2.nElems.y = dy2;
 
-Body1 = CreateFEMesh(DofsAtNode,Body1);
-Body2 = CreateFEMesh(DofsAtNode,Body2);
+Body1 = CreateFEMesh(Body1);
+Body2 = CreateFEMesh(Body2);
 
-%#################### BC  ###########################################
+%#################### BC ###########################################
 Body1.loc.x = 0; 
-Body1.loc.y = 'all';  % Number (Location of nodes along the axis) or 'all' can be an option
+Body1.loc.y = 'all';  % Location of nodes along the axis or 'all' can be an option
 
 Body2.loc.x = 0; 
 Body2.loc.y = 'all'; 
 
-Body1 = CreateBC(Body1);
-Body2 = CreateBC(Body2); 
+BCtype = 'all'; % options: 'all', 'ux', 'uy' (P.S. possible to combine calling second time CreateBC)
+Body1 = CreateBC(Body1,BCtype);
+Body2 = CreateBC(Body2,BCtype); 
 
 %##################### Loadings ######################
-% local positions (assuming all bodies in (0,0) )
+% local positions (assuming each body inside the square [(0.0)-(Lx,Ly)]
 Body1.Fext.x = 0; 
 Body1.Fext.y = -62.5*10^(6)*2;
 
@@ -65,20 +62,7 @@ Body2.Fext.x = 0;
 Body2.Fext.loc.x = Body2.Lx;
 Body2.Fext.loc.y = 'all';
 
-%##################### Egde nodes #########################
-Body1.edge1.loc.x = Body1.Lx;
-Body1.edge1.loc.y = 0;
-
-Body1.edge2.loc.x = Body1.Lx;
-Body1.edge2.loc.y = Body1.Ly;
-
-Body2.edge1.loc.x = Body2.Lx;
-Body2.edge1.loc.y = 0;
-
-Body2.edge2.loc.x = Body2.Lx;
-Body2.edge2.loc.y = Body2.Ly;
- 
-% Identification of possble contact surfaces
+%##################### Identification of possble contact surfaces #########
 % local positions (assuming all bodies in (0,0) )
 Body1.contact.loc.x = 'all';
 Body1.contact.loc.y = 0;   
@@ -90,7 +74,7 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "Augumented Lagrange";   % Subtypes
+approachSubtype = "Penalty";   % Subtypes
                                          % Penalty: Penalty, Augumented Lagrange,
                                          %          Nitsche, penalty-Nitsche,  Augmented Nitsche
                                          % Lagrange: Lagrange, perturbed Lagrange
@@ -109,7 +93,7 @@ Perturbation = "automatic"; % Options: "automatic", "incremental"
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
                        GapfuncPairs,Perturbation,PointsofInterest);
 
-if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augmented Nitsche"  
+if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
     [InitialContactPoints,~] = ContactPointfunc(Body1);
     approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
     approach.lambda.imax = 100;
@@ -117,18 +101,20 @@ end
 
 %##################### Newton iter. parameters ######################
 imax = 20; 
-tol=1e-3;   
+tol=1e-4;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 1;
+steps= 5;
 Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
-% %#################### Processing ######################
+%#################### Processing ######################
 
 total_steps = 0;
 titertot=0;  
 
 for ii = 1:steps
+
         approach.lambda.step = 0;
-        approach.lambda.converge = false;      
+        approach.lambda.converge = false;  
+        
         Body1 = CreateFext(ii,steps,Body1,type);
         Body2 = CreateFext(ii,steps,Body2,type);
         
@@ -169,23 +155,13 @@ for ii = 1:steps
 
                 end
 
-                if approach.Name == "Augumented Lagrange"
-                    lambda_old = approach.lambda.meaning;
-                    [~,lambda_next] = AugmentedContactForce(Body1,Body2,approach);
-                    approach.lambda.converge = norm(lambda_next-lambda_old)/norm(lambda_next) < tol;
-                    approach.lambda.meaning = lambda_next;
-
-                elseif approach.Name == "penalty-Nitsche"
-                    pn_old = approach.lambda.meaning;
-                    [~,pn_next,maxPenetration] = PenaltyNitscheContactForce(Body1,Body2,approach);                       
-                    approach.lambda.converge = norm(pn_next-pn_old) / max(1,norm(pn_next)) < tol; % Relative change of penalty coefficients            
-                    approach.lambda.meaning = pn_next;
+                if  approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || ...
+                    approachSubtype == "Augumented Nitsche"
                     
-                elseif approach.Name == "Augmented Nitsche"
-                    q_old = approach.lambda.meaning;                
-                    [~,q_next] = AugmentedNitscheContactForce(Body1,Body2,approach);                
-                    approach.lambda.converge = norm(q_next-q_old)  < tol;                             
-                    approach.lambda.meaning = q_next;
+                    lambda_old = approach.lambda.meaning;        
+                    [~,lambda_next] = approach.AimFunction(Body1,Body2,approach);
+                    approach.lambda.converge = norm(lambda_next-lambda_old)/ max(1,norm(lambda_next)) < tol;                             
+                    approach.lambda.meaning = lambda_next; 
 
                 else
                     approach.lambda.converge = true;
@@ -198,7 +174,7 @@ for ii = 1:steps
 end
 % %##################### Post-Processing ######################
 ShowVisualization = true;
-ShowNodeNumbers = false;
+ShowNodeNumbers = true;
 WhatoToShow = "u_total"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
-PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution);
+PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
 
