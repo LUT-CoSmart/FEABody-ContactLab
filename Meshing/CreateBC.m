@@ -10,7 +10,9 @@ function Body = CreateBC(Body,type)
         bc = Body.bc;   % keep prescribed BCs if any 
     end
 
-    NodalIDAt = FindGlobNodalID(Body.P0,Body.loc,Body.shift); % let's find global nodal ID's x=0
+    if ~strcmp(type, 'none') 
+        NodalIDAt = FindGlobNodalID(Body.P0,Body.loc,Body.shift); % let's find global nodal ID's x=0
+    end
     
     if strcmp(type, 'all')
         bcInd=xlocChosen(DofsAtNode,NodalIDAt,1:2);  % all fixed at clambed end
@@ -18,6 +20,8 @@ function Body = CreateBC(Body,type)
         bcInd=xlocChosen(DofsAtNode,NodalIDAt,1);
     elseif strcmp(type, 'uy')
         bcInd=xlocChosen(DofsAtNode,NodalIDAt,2);
+    elseif strcmp(type, 'none')
+        bcInd=[];
     else
         error('Chose the right type of BC!')
     end    
