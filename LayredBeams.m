@@ -2,7 +2,7 @@ clc, clear, close all
 format long;
 addpath(genpath(pwd));
 
-%########## Element positioning (from (0.0) coord. ) ###########
+%########## Bodies Data : Element positioning (from (0.0) coord. ) ########
 % Body 1
 Body1.Lx = 2;
 Body1.Ly = 0.5;

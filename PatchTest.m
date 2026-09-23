@@ -2,7 +2,7 @@ clc, clear, close all
 format long;
 addpath(genpath(pwd));
 
-%########## Element positioning (from (0.0) coord. ) ###########
+%########## Bodies Data : Element positioning (from (0.0) coord. ) ########
 % Body 1
 Body1.Lx = 10;
 Body1.Ly = 5;
@@ -64,7 +64,7 @@ Body2.Fext.x = 0;
 
 Body2.Fext.loc.x = Body2.Lx;
 Body2.Fext.loc.y = 'all';
-% 
+ 
 % %##################### Egde nodes #########################
 % Body1.edge1.loc.x = Body1.Lx;
 % Body1.edge1.loc.y = 0;
