@@ -1,4 +1,3 @@
-
 function [Fc,lambda_trial] = AugmentedContactForce(ContactBody,TargetBody,approach)
 
     ContactPointfunc = approach.ContactPointfunc;

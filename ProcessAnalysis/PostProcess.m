@@ -1,15 +1,9 @@
-function PostProcess(Body1, Body2, ShowVisualization, vis, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution)
+function PostProcess(Body1, Body2, ShowVisualization, vis, ShowNodeNumbers, approach, ContactPointfunc,Gapfunc,Solution)
 
 % fprintf('Static test, contact approach = %s  \n', approach.Name);
 
 PrintResults(Body1)
 PrintResults(Body2)
-
-if approach.Type == "Penalty"
-    gam = 1/approach.penalty;
-else
-    gam = NaN;
-end
 
 if ShowVisualization
     hold on 

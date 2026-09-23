@@ -3,10 +3,9 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
     
-    [ContactPoints,ContactPointsElements] = ContactPointfunc(ContactBody);
+    [ContactPoints,ContactPointsElements,ContactAreas] = ContactPointfunc(ContactBody);
     numberOfPoints = size(ContactPoints,1);
-    area = ContactBody.Lx/ContactBody.nElems.x*ContactBody.Lz/approach.numberOfPoints;
-    gamma = area/approach.penalty;
+    
 
     lambda_old = approach.lambda.meaning;
     if isempty(lambda_old) || length(lambda_old) ~= numberOfPoints
@@ -15,6 +14,7 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
     lambda_trial = lambda_old;
 
     for i = 1:numberOfPoints
+        gamma = ContactAreas(i)/approach.penalty;
         ContactPoint = ContactPoints(i,:);
         Outcome = FindPoint(TargetBody,ContactPoint);
 
@@ -65,8 +65,8 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         DOFpositions_cont = ContactBody.xloc(element_cont,:);
         DOFpositions_targ = TargetBody.xloc(element_targ,:);
         
-        Fcont(DOFpositions_cont) = Fcont(DOFpositions_cont)+Fcont_loc*area;% *area here improves convergence
-        Ftarg(DOFpositions_targ) = Ftarg(DOFpositions_targ)+Ftarg_loc*area;
+        Fcont(DOFpositions_cont) = Fcont(DOFpositions_cont)+Fcont_loc*ContactAreas(i);% *area here improves convergence
+        Ftarg(DOFpositions_targ) = Ftarg(DOFpositions_targ)+Ftarg_loc*ContactAreas(i);
 
 
     end

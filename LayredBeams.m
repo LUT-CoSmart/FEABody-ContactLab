@@ -2,10 +2,9 @@ clc, clear, close all
 format long;
 addpath(genpath(pwd));
 
-%########## Reads element's data ###############################
-ElemNodes=4;
-DofsAtNode=2;           
-ElemDofs=8;
+%########## Element's data ###############################
+% Element nodes = 4;
+DofsAtNode = 2;           
 
 %########## Element positioning (from (0.0) coord. ) ###########
 % Body 1
@@ -91,12 +90,12 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "penalty-Nitsche";   % Subtypes
+approachSubtype = "Augumented Lagrange";   % Subtypes
                                          % Penalty: Penalty, Augumented Lagrange,
                                          %          Nitsche, penalty-Nitsche,  Augmented Nitsche
                                          % Lagrange: Lagrange, perturbed Lagrange
 
-PointsofInterest.Name = "Gauss"; % options: "nodes", "Gauss", "LinSpace" 
+PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
@@ -104,6 +103,7 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 % The reasoning is as follows. The points can be projected over several elements of the target body, which shape functions are linear.
 % That makes several consequenced elements be in one line. The same reason is to have coarser mesh for the contact body than the target one.  
 % ==============================================================================================================
+
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
@@ -112,27 +112,28 @@ Perturbation = "automatic"; % Options: "automatic", "incremental"
 if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augmented Nitsche"  
     [InitialContactPoints,~] = ContactPointfunc(Body1);
     approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
+    approach.lambda.imax = 100;
 end
 
 %##################### Newton iter. parameters ######################
 imax = 20; 
 tol=1e-3;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 10;
-Solution = "Newton-Broyden"; % Options: Newton-Rapson, Newton-Broyden
+steps= 1;
+Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 % %#################### Processing ######################
 
 total_steps = 0;
 titertot=0;  
 
 for ii = 1:steps
-        
+        approach.lambda.step = 0;
         approach.lambda.converge = false;      
         Body1 = CreateFext(ii,steps,Body1,type);
         Body2 = CreateFext(ii,steps,Body2,type);
         
-        while (~approach.lambda.converge) % special case for Augumented Lagrange    
-
+        while (~approach.lambda.converge) && (approach.lambda.step < approach.lambda.imax)% special case for Augumented Lagrange    
+                approach.lambda.step = approach.lambda.step + 1;    
                 for lambdaBackTrack = backtrack.lambdaList % backtrack loop
 
                     if lambdaBackTrack < 1

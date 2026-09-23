@@ -3,10 +3,10 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
 
-    [ContactPoints,ContactPointsElements] = ContactPointfunc(ContactBody); 
+    [ContactPoints,ContactPointsElements,ContactAreas] = ContactPointfunc(ContactBody); 
     numberOfPoints = size(ContactPoints,1); 
-    area = ContactBody.Lx/ContactBody.nElems.x*ContactBody.Lz/approach.numberOfPoints;
-    maxPenetration = 0; gapTolerance = approach.gapTolerance; 
+    maxPenetration = 0; 
+    gapTolerance = approach.gapTolerance; 
 
     pn_old = approach.lambda.meaning;
     if isempty(pn_old) || numel(pn_old) ~= numberOfPoints
@@ -64,17 +64,17 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
         if penetration > gapTolerance
 
             pn_target_gap = pn_old(i)*penetration/gapTolerance;
-            pn_target_sigma = area*max(0, -sigma_nn)/gapTolerance;        
+            pn_target_sigma = ContactAreas(i)*max(0, -sigma_nn)/gapTolerance;        
             pn_target = max(pn_target_gap, pn_target_sigma);        
             pn_trial(i) = min(10*pn_old(i), max(pn_old(i), pn_target));
         end
                 
-        gamma = area/pn_old(i);
+        gamma = ContactAreas(i)/pn_old(i);
                
         pressure = max(0, -sigma_nn - signedGap/gamma);
                 
-        Fcont_loc = area*(pressure*(Nm_cont.'*Normal_cont) - gamma*(sigma_nn + pressure)*dsigma_cont);        
-        Ftarg_loc = area*(pressure*(Nm_targ.'*Normal_targ) - gamma*(sigma_nn + pressure)*dsigma_targ);
+        Fcont_loc = ContactAreas(i)*(pressure*(Nm_cont.'*Normal_cont) - gamma*(sigma_nn + pressure)*dsigma_cont);        
+        Ftarg_loc = ContactAreas(i)*(pressure*(Nm_targ.'*Normal_targ) - gamma*(sigma_nn + pressure)*dsigma_targ);
 
         DOFpositions_cont = ContactBody.xloc(element_cont,:); 
         DOFpositions_targ = TargetBody.xloc(element_targ,:); 

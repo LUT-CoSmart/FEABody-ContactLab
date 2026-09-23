@@ -1,17 +1,20 @@
 function [ContactPointfunc, Gapfunc, GapfuncPairs] = ContactPointSetting(PointsofInterest)
-    
-    addpath("Contact\ProjectionFunctions")   
-    ContactPoints = PointsofInterest.Name;
+        
+    ContactPointsName = PointsofInterest.Name;
     n = PointsofInterest.n;
-  
-    % Sanity check
-    if  ContactPoints == "LinSpace"
-            if n < 2 
-               warning("Number of points is not enough, it is set to 2 ")
-               n = 2; 
-            end     
+         
+    if ContactPointsName == "Gauss"
+        [z,w] = gauleg2(-1,1,n);
+    elseif ContactPointsName == "LinSpace"
+        n = max(n,2); % sanity check goes here
+        z = geospace(-1,1,n)';
+        w = diff(z);
+        z = z(2:end);
+     else        
+        z = 1;
+        w = 2;
     end
-    
-    ContactPointfunc =  @(ContactBody) ContactPointsFunction(ContactBody,ContactPoints,n);
-    Gapfunc = @(ContactBody,TargetBody) InnerGapCalculation(ContactBody,TargetBody,ContactPoints,n); 
-    GapfuncPairs = @(ContactBody,TargetBody) GapCalculationFunctionPairs(ContactBody,TargetBody,ContactPoints,n);
+
+    ContactPointfunc =  @(ContactBody) ContactPointsFunction(ContactBody,z,w);
+    Gapfunc = @(ContactBody,TargetBody) InnerGapCalculation(ContactBody,TargetBody,z,w); 
+    GapfuncPairs = @(ContactBody,TargetBody) GapCalculationFunctionPairs(ContactBody,TargetBody,z,w);

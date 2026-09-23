@@ -49,8 +49,6 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
         elseif approachSubtype == "Nitsche"
             backtrack.meaning = true;
             AimFunction = @(Body1,Body2) NitscheContactForce(Body1,Body2,approach);
-
-
         end
                     
     else

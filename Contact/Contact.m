@@ -2,7 +2,7 @@ function [DofsFunction,Stiffness] = Contact(Body1,Body2,approach,step,Solution)
 
     DOFsNumber = Body1.nx + Body2.nx;
     DofsFunction = zeros(DOFsNumber,1);
-    Stiffness = zeros(DOFsNumber);
+    Stiffness = zeros(numel(DofsFunction),DOFsNumber);
 
     if approach.Type ~= "None"
 

@@ -37,7 +37,7 @@ function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(iteration,Solution,
 
             K_bc = [        Ke_bc Stiffness_bc';
                      Stiffness_bc  Matrix_add]; 
-            ff_bc = [ff_bc; zeros(m,1)];
+            ff_bc = [ff_bc; zeros(m,1)]; % this works for the cases where initial gap is zero  
             
         otherwise
             ff_bc = ff_bc + DofsFunction(bc);            
@@ -49,12 +49,12 @@ function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(iteration,Solution,
         num = cond(K_bc);
         Bn_m1 = inv(K_bc);
         if num > 1e12
-           D = diag(1./sqrt(sum(K_bc.^2,2)));
-           uu_bc = - (D*Bn_m1)*(D*ff_bc); 
+           D = diag(1./sqrt(sum(K_bc.^2,2)));          
+           Bn_m1 = (D*K_bc)\D;
         else 
-            uu_bc = - Bn_m1*ff_bc;
+           Bn_m1 = inv(K_bc);           
         end
-        
+         uu_bc = - Bn_m1*ff_bc;
     elseif Solution == "Newton-Broyden" 
        zn = ff_bc - ff_bc_old;
        s = uu_bc_old;
