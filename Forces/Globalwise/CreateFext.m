@@ -1,8 +1,24 @@
-
 function Body = CreateFext(currentStep,Nsteps,Body,type)
 
     DofsAtNode = Body.DofsAtNode;
     Fext = zeros(Body.nx,1); % Initialize vector of ext forces
+    
+    % Force check
+    if ~isfield(Body, 'Fext')
+        Body.Fext.x = 0;
+        Body.Fext.y = 0;
+        Body.Fext.loc.x = 'all';        
+        Body.Fext.loc.y = 'all';
+    else
+        if ~isfield(Body.Fext.loc, 'x')
+           Body.Fext.loc.x = 'all';
+           Body.Fext.x = 0;
+        end
+        if ~isfield(Body.Fext.loc, 'y')
+           Body.Fext.loc.y = 'all';
+           Body.Fext.y = 0;
+        end
+    end
 
     NodalIDAt = FindGlobNodalID(Body.P0,Body.Fext.loc,Body.shift);
     NumberOfIDs = length(NodalIDAt);

@@ -22,11 +22,11 @@ Body2.shift.x = 0;
 Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
-dx1 = 8;
-dy1 = 3;
+dx1 = 10;
+dy1 = 4;
 
-dx2 = 10;
-dy2 = 2;
+dx2 = 15;
+dy2 = 4;
 
 Body1.nElems.x = dx1;
 Body1.nElems.y = dy1;
@@ -74,9 +74,9 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "Penalty";   % Subtypes
+approachSubtype = "Nitsche";   % Subtypes
                                          % Penalty: Penalty, Augumented Lagrange,
-                                         %          Nitsche, penalty-Nitsche,  Augmented Nitsche
+                                         %          Nitsche, penalty-Nitsche,  Augumented Nitsche
                                          % Lagrange: Lagrange, perturbed Lagrange
 
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
@@ -103,7 +103,7 @@ end
 imax = 20; 
 tol=1e-4;   
 type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 5;
+steps= 40;
 Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 %#################### Processing ######################
 
@@ -175,6 +175,6 @@ end
 % %##################### Post-Processing ######################
 ShowVisualization = true;
 ShowNodeNumbers = true;
-WhatoToShow = "u_total"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
+WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM" 
 PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
 

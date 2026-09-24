@@ -93,4 +93,4 @@ Sigma = [sigma(1) sigma(3);
 nabla_sigma = jacobian(sigma,[xi,eta])*JeInv;
 
 matlabFunction(nabla_sigma,'file','nabla_sigma_2412','vars',{E,nu,uu,X,xi,eta});
-matlabFunction(Sigma,'file','Sigma_2412','vars',{E,nu,uu,X,xi,eta});
+matlabFunction(Sigma,'file','Sigma_raw_2412','vars',{E,nu,uu,X,xi,eta});

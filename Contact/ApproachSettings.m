@@ -44,7 +44,8 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
             AimFunction = @(Body1,Body2,approach) AugmentedNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"
-            backtrack.meaning = true;
+            % backtrack.meaning = true;
+            backtrack.meaning = false;
             AimFunction = @(Body1,Body2,approach) PenaltyContactForce(Body1,Body2,approach);
         
         elseif approachSubtype == "Nitsche"
