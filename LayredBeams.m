@@ -91,15 +91,10 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
+
+alpha = 10;% the one parameter to sweep
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
                        GapfuncPairs,Perturbation,PointsofInterest);
-
-if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
-    [InitialContactPoints,~] = ContactPointfunc(Body1);
-    approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
-    approach.lambda.imax = 100;
-end
-
 %##################### Newton iter. parameters ######################
 imax = 20; 
 tol=1e-4;   
