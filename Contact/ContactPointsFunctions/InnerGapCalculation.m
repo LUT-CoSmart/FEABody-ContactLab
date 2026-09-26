@@ -1,7 +1,11 @@
-function Gap = InnerGapCalculation(ContactBody,TargetBody,ContactPointsName,n)
+function [Gap,GapMax] = InnerGapCalculation(ContactBody,TargetBody,ContactPointsName,n) 
     
+
     Gap = 0;    
-    ContactPoints = ContactPointsFunction(ContactBody, ContactPointsName, n);
+    [ContactPoints,~,ContactAreas] = ContactPointsFunction(ContactBody, ContactPointsName, n);  
+    
+    AreaTot = 0;                                                                          
+    GapMax = 0;                                                                           
     
     %% TODO: make it over all points simultaneously, working with array or in parallel  
     %% possible if yo vectorize "FindPoint" 
@@ -12,6 +16,12 @@ function Gap = InnerGapCalculation(ContactBody,TargetBody,ContactPointsName,n)
         % Search the attributes of the corresponding point on the target surface 
         Outcome = FindPoint(TargetBody,ContactPoint);
         if Outcome.Gap < 0 
-            Gap = Gap + abs(Outcome.Gap);
+            Gap = Gap + abs(Outcome.Gap)*ContactAreas(ii);                               
+            AreaTot = AreaTot + ContactAreas(ii);                                         
+            GapMax = max(GapMax, abs(Outcome.Gap));                                       
         end
     end
+
+    if AreaTot > 0                                                                      
+        Gap = Gap/AreaTot;   % area-weighted mean penetration                    
+    end                                                                                  

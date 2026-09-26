@@ -7,6 +7,20 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
     approach.perturbation = Perturbation;
     approach.ContactPointfunc = ContactPointfunc;
     approach.numberOfPoints = PointsofInterest.n;
+    
+
+    if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
+        [InitialContactPoints,~] = ContactPointfunc(ContactBody);
+        approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
+        approach.lambda.imax = 100;
+    end
+    
+    % h  = min(ContactBody.Lx/ContactBody.nElems.x, TargetBody.Lx/TargetBody.nElems.x);
+    hC = min(vecnorm(diff(ContactBody.P0(ContactBody.contact.nodalid,:)),2,2));
+    hT = min(vecnorm(diff(TargetBody.P0(TargetBody.contact.nodalid,:)),2,2));
+    h  = min(hC,hT); % propsed by Claude - do compare all for any orientation 
+    
+    approach.penalty = alpha*max(ContactBody.E,TargetBody.E)/h;  
 
     % sanity check, that approach and subtype are correlating 
     if approachBasis == "Lagrange"
@@ -32,20 +46,18 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
         approach.Name = approachSubtype; 
 
         if approachSubtype == "Augumented Lagrange"
-            approach.penalty = 1e7;  % decreasing parameter for better stability, method operates with any small penalty 
             AimFunction = @(Body1,Body2,approach) AugmentedContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "penalty-Nitsche"
             backtrack.meaning = true;
-            approach.gapTolerance = 2e-4;
+            approach.gapTolerance = 1e-4*h;
             AimFunction = @(Body1,Body2,approach) PenaltyNitscheContactForce(Body1,Body2,approach);
             
         elseif approachSubtype == "Augumented Nitsche"          
             AimFunction = @(Body1,Body2,approach) AugmentedNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"
-            % backtrack.meaning = true;
-            backtrack.meaning = false;
+            backtrack.meaning = true;
             AimFunction = @(Body1,Body2,approach) PenaltyContactForce(Body1,Body2,approach);
         
         elseif approachSubtype == "Nitsche"
@@ -70,12 +82,3 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
        backtrack.lambdaList = 1;
     end
    
-
-    if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
-        [InitialContactPoints,~] = ContactPointfunc(ContactBody);
-        approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
-        approach.lambda.imax = 100;
-    end
-    
-    h  = min(ContactBody.Lx/ContactBody.nElems.x, TargetBody.Lx/TargetBody.nElems.x);
-    approach.penalty = alpha*max(ContactBody.E,TargetBody.E)/h;  

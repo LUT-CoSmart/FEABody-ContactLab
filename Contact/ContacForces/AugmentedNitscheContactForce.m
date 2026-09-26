@@ -35,7 +35,7 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         Nm_cont = Nm_2412(xi_cont,eta_cont);
         Sigma_cont = Sigma_2412(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont,eta_cont);
         sigma_nn_cont = Normal_cont.'*Sigma_cont*Normal_cont;
-        dsigma_cont = NormalStressDerivative(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont,eta_cont,Normal_cont);
+        dsigma_cont = NormalStressDerivative_Im(ContactBody.E,ContactBody.nu,U_cont,X_cont,xi_cont,eta_cont,Normal_cont);
         
         % target
         element_targ = Outcome.Index;
@@ -44,7 +44,7 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         Nm_targ = Nm_2412(xi_targ,eta_targ);
         Sigma_targ = Sigma_2412(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ);
         sigma_nn_targ = Normal_targ.'*Sigma_targ*Normal_targ;
-        dsigma_targ = NormalStressDerivative(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,Normal_targ);
+        dsigma_targ = NormalStressDerivative_Im(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,Normal_targ);
 
         sigma_nn = 0.5*(sigma_nn_cont+sigma_nn_targ); % likely it will be positive
         dsigma_cont = 0.5*dsigma_cont;

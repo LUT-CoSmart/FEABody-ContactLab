@@ -1,7 +1,7 @@
 function status = printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap)
      status = false;
      if ~isnan(Gap)
-        fprintf('Iteration: %d, Convergence: %10.4f, Displacements norm: %10.5f, Total gap: %10.7f\n', jj, norm(abs(deltaf)), norm(uu_bc), Gap);      
+        fprintf('Iteration: %d, Convergence: %10.4f, Displacements norm: %10.5f, Mean penetration: %10.7f\n', jj, norm(abs(deltaf)), norm(uu_bc), Gap);      
      else
         fprintf('Iteration: %d, Convergence: %10.4f, Displacements norm: %10.5f\n', jj, norm(abs(deltaf)), norm(uu_bc));            
      end

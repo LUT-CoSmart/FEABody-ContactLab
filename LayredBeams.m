@@ -89,12 +89,12 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 % That makes several consequenced elements be in one line. The same reason is to have coarser mesh for the contact body than the target one.  
 % ==============================================================================================================
 
-[ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
+[ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest,approachBasis);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
 alpha = 10;% the one parameter to sweep
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                       GapfuncPairs,Perturbation,PointsofInterest);
+                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha);
 %##################### Newton iter. parameters ######################
 imax = 20; 
 tol=1e-4;   

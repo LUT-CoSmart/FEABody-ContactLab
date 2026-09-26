@@ -93,7 +93,6 @@ function Visualization(Body,vis, ShowNodeNumbers)
         set(gca, 'FontSize', [FontSize], 'FontName','Times New Roman');
         set(text, 'FontSize', [FontSize], 'FontName','Times New Roman');
         xlabel('{\it{X}} [m]','FontName','Times New Roman','FontSize',[FontSize]),ylabel('{\it{Y}} [m]','FontName','Times New Roman','FontSize',[FontSize]),zlabel('Z [m]','FontName','Times New Roman','FontSize',[FontSize]);
-        % title(['Displacements at free end: {\it{u_x}} = ' ,num2str(Results(end,4)) ,'  ,{\it{u_y}} = ', num2str(Results(end,5))],'FontName','Times New Roman','FontSize',[FontSize]);     
     else
 
     end    

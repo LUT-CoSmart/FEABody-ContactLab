@@ -76,7 +76,7 @@ approachBasis = "Penalty";
 approachSubtype = "penalty-Nitsche"; 
 PointsofInterest.Name = "Gauss";
 PointsofInterest.n = 1;
-[ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest);
+[ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest,approachBasis);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
 alpha = 10;% the one parameter to sweep
@@ -116,7 +116,7 @@ for ii = 1:steps
                         % interaction of two bodies
                         [DofsFunction, Stiffness] = Contact(Body1,Body2,approach,jj,Solution);
         
-                        Gap = Gapfunc(Body1,Body2);
+                        [Gap,GapMax] = Gapfunc(Body1,Body2);
                         % inner forces of the each body
                         Body1 = Elastic(Body1);
                         Body2 = Elastic(Body2);
@@ -157,6 +157,7 @@ for ii = 1:steps
         Body2 = SaveResults(Body2,ii,"last");
 
 end
+
 % %##################### Post-Processing ######################
 ShowVisualization = true;
 ShowNodeNumbers = false;

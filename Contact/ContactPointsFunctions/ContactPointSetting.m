@@ -1,4 +1,4 @@
-function [ContactPointfunc, Gapfunc, GapfuncPairs] = ContactPointSetting(PointsofInterest)
+function [ContactPointfunc, Gapfunc, GapfuncPairs] = ContactPointSetting(PointsofInterest,approachBasis)
         
     ContactPointsName = PointsofInterest.Name;
     n = PointsofInterest.n;
@@ -10,9 +10,14 @@ function [ContactPointfunc, Gapfunc, GapfuncPairs] = ContactPointSetting(Pointso
         z = geospace(-1,1,n)';
         w = diff(z);
         z = z(2:end);
-     else        
-        z = 1;
-        w = 2;
+    else     
+        if approachBasis == "Lagrange"
+           z = 1;
+           w = 2;
+        else
+           z = [-1; 1];
+           w = [ 1; 1];
+        end   
     end
 
     ContactPointfunc =  @(ContactBody) ContactPointsFunction(ContactBody,z,w);
