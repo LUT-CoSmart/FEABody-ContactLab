@@ -22,10 +22,10 @@ Body2.shift.x = 0;
 Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
-dx1 = 10;
-dy1 = 4;
+dx1 = 5;
+dy1 = 3;
 
-dx2 = 15;
+dx2 = 10;
 dy2 = 4;
 
 Body1.nElems.x = dx1;
@@ -74,10 +74,11 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "Nitsche";   % Subtypes
-                                         % Penalty: Penalty, Augumented Lagrange,
-                                         %          Nitsche, penalty-Nitsche,  Augumented Nitsche
-                                         % Lagrange: Lagrange, perturbed Lagrange
+approachSubtype = "penalty-Nitsche";   
+% Subtypes
+% Penalty: Penalty, Augumented Lagrange,
+%          Nitsche, penalty-Nitsche,  Augumented Nitsche
+% Lagrange: Lagrange, perturbed Lagrange
 
 PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
@@ -102,8 +103,8 @@ end
 %##################### Newton iter. parameters ######################
 imax = 20; 
 tol=1e-4;   
-type = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 40;
+Loadtype = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
+steps= 10;
 Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 %#################### Processing ######################
 
@@ -115,8 +116,8 @@ for ii = 1:steps
         approach.lambda.step = 0;
         approach.lambda.converge = false;  
         
-        Body1 = CreateFext(ii,steps,Body1,type);
-        Body2 = CreateFext(ii,steps,Body2,type);
+        Body1 = CreateFext(ii,steps,Body1,Loadtype);
+        Body2 = CreateFext(ii,steps,Body2,Loadtype);
         
         while (~approach.lambda.converge) && (approach.lambda.step < approach.lambda.imax)% special case for Augumented Lagrange    
                 approach.lambda.step = approach.lambda.step + 1;    

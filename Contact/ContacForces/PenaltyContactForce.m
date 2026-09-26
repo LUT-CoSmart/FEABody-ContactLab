@@ -8,7 +8,7 @@ function Fc = PenaltyContactForce(ContactBody,TargetBody,approach)
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
 
-    [ContactPoints, ContactPointsElements] = ContactPointfunc(ContactBody);
+    [ContactPoints, ContactPointsElements, ContactAreas] = ContactPointfunc(ContactBody);
 
     [count,ContactGeometry, TargetGeometry, Gaps, Normals] = Projection(ContactPoints,ContactPointsElements,ContactBody,TargetBody); 
 
@@ -27,8 +27,9 @@ function Fc = PenaltyContactForce(ContactBody,TargetBody,approach)
             Normal_targ =  Normal; 
             
             % calculation of the forces applied to the nodes of contact elemnet 
-            Fcont_loc = penalty * Gap * Normal_cont;                                                                              
-            Ftarg_loc = penalty * Gap * Normal_targ; 
+            ContactArea = ContactAreas(ContactGeometry.Index(i)); 
+            Fcont_loc = penalty * Gap * ContactArea * Normal_cont;                                                                              
+            Ftarg_loc = penalty * Gap * ContactArea * Normal_targ; 
                        
             % Redistribution over the nodes
             DOFpositions_cont = ContactGeometry.Dofs(:,i);

@@ -12,7 +12,8 @@ function [count,ContactGeometry, TargetGeometry, Gap, Normal] = Projection(Conta
     ContactCoordsXi = [];
     ContactCoords = [];
     ContactDisp = [];
-
+    ContactIndex = []; 
+    
     TargetDofs = [];
     TargetCoordsXi = [];
     TargetCoords = [];
@@ -55,6 +56,7 @@ function [count,ContactGeometry, TargetGeometry, Gap, Normal] = Projection(Conta
             ContactCoordsXi = [ContactCoordsXi vec_cont];
             ContactCoords = [ContactCoords X_cont];
             ContactDisp = [ContactDisp U_cont];
+            ContactIndex = [ContactIndex ii]; 
 
             TargetDofs = [TargetDofs DOFpositions_targ(:)];
             TargetCoordsXi = [TargetCoordsXi vec_targ];
@@ -68,6 +70,7 @@ function [count,ContactGeometry, TargetGeometry, Gap, Normal] = Projection(Conta
     ContactGeometry.CoordsXi = ContactCoordsXi;
     ContactGeometry.Coords = ContactCoords;    
     ContactGeometry.Disp= ContactDisp;    
+    ContactGeometry.Index = ContactIndex; 
 
     TargetGeometry.Dofs = TargetDofs;
     TargetGeometry.CoordsXi = TargetCoordsXi; 

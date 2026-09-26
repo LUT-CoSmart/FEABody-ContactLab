@@ -8,8 +8,6 @@ function dsigma = NormalStressDerivative_Im(E,nu,U,X,xi,eta,Normal)
         U_trial = complex(U);
         U_trial(j) = U_trial(j)+1i*h;
         Sigma_trial = Sigma_2412(E,nu,U_trial,X,xi,eta);
-        F_trial = F_2412(U_trial,X,xi,eta); 
-        Sigma_trial = 1/det(F_trial) * F_trial * Sigma_trial * F_trial';
         dsigma(j) = imag(Normal.'*Sigma_trial*Normal)/h;
     end
 end

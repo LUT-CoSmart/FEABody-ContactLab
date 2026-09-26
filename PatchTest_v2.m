@@ -2,8 +2,8 @@ clc, clear, close all
 format long;
 addpath(genpath(pwd));
 
-p = 1;    
-W = 1;
+p = 1e11;    
+W = 5;
 
 %########## Bodies Data : Element positioning (from (0.0) coord. ) ########
 % Body 1
@@ -13,8 +13,8 @@ Body1.Lz = 0.1;
 Body1.E=2e11;
 Body1.nu=0.28;
 Body1.shift.x = W;
-Body1.shift.y = 5;
-
+% Body1.shift.y = 5;
+Body1.shift.y = 5 - 1e-9;   % tiny initial overlap -> contact is active at iteration 1
 % Body 2
 Body2.Lx = 20;
 Body2.Ly = 5;
@@ -25,11 +25,11 @@ Body2.shift.x = 0;
 Body2.shift.y = 0;
 
 %#################### Mesh #########################################
-dx1 = 4;
-dy1 = 1;
+dx1 = 20;
+dy1 = 5;
 
-dx2 = 4;
-dy2 = 1;
+dx2 = 20;
+dy2 = 15;
 
 Body1.nElems.x = dx1;
 Body1.nElems.y = dy1;
@@ -73,7 +73,7 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ######################################
 approachBasis = "Penalty";
-approachSubtype = "Penalty"; 
+approachSubtype = "penalty-Nitsche"; 
 PointsofInterest.Name = "Gauss";
 PointsofInterest.n = 2;
 
@@ -81,6 +81,14 @@ PointsofInterest.n = 2;
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
                        GapfuncPairs,Perturbation,PointsofInterest);
+
+alpha = 10;% the one parameter to sweep
+h  = min(Body1.Lx/Body1.nElems.x, Body2.Lx/Body2.nElems.x);
+
+
+%% check dimension, isn't it N/m^3 
+approach.penalty = alpha*max(Body1.E,Body2.E)/h;  
+
 
 if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
     [InitialContactPoints,~] = ContactPointfunc(Body1);
@@ -92,7 +100,7 @@ end
 imax = 20; 
 tol=1e-4;   
 LoadType = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 1;
+steps= 5;
 Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 %#################### Processing ######################
 
@@ -165,14 +173,5 @@ end
 % %##################### Post-Processing ######################
 ShowVisualization = true;
 ShowNodeNumbers = true;
-WhatoToShow = "sigma_yy"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
+WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy" 
 PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
-
-
-axis equal
-
-% Full-load check: -4e9 N for p = 2e9 Pa and thickness = 0.1 m.
-Fy1 = sum(Body1.Fext.vec(2:2:end));
-Fy2 = sum(Body2.Fext.vec(2:2:end));
-fprintf('Applied Fy: upper = %.6e N, lower = %.6e N, total = %.6e N\n', Fy1,Fy2,Fy1 + Fy2);
-
