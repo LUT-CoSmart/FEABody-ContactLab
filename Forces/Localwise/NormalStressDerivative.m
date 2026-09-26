@@ -17,9 +17,7 @@ function dsigma = NormalStressDerivative(E,nu,U,X,xi,eta,Normal)
 
         Sigmah = Sigma_2412(E,nu,Uh,X,xi,eta);        
         sigmaNN_h = Normal.'*Sigmah*Normal;
-
-        % Forward finite-difference derivative
-        dsigma(j) = (sigmaNN_h - sigmaNN_0)/h;
+        dsigma(j) = (sigmaNN_0 - sigmaNN_h)/h;
 
         I_vec(j) = 0;
     end

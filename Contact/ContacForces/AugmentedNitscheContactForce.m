@@ -14,7 +14,7 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
     lambda_trial = lambda_old;
 
     for i = 1:numberOfPoints
-        gamma = ContactAreas(i)/approach.penalty;
+        gamma = 1/approach.penalty;
         ContactPoint = ContactPoints(i,:);
         Outcome = FindPoint(TargetBody,ContactPoint);
 

@@ -58,14 +58,13 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
         
 
         if penetration > gapTolerance
-
             pn_target_gap = pn_old(i)*penetration/gapTolerance;
-            pn_target_sigma = ContactAreas(i)*max(0, -sigma_nn)/gapTolerance;        
+            pn_target_sigma = max(0, -sigma_nn)/gapTolerance;        
             pn_target = max(pn_target_gap, pn_target_sigma);        
             pn_trial(i) = min(10*pn_old(i), max(pn_old(i), pn_target));
         end
                 
-        gamma = ContactAreas(i)/pn_old(i);
+        gamma = 1/pn_old(i);
                
         pressure = max(0, -sigma_nn - signedGap/gamma);
                 

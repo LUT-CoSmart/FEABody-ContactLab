@@ -46,7 +46,7 @@ function Sigma = Sigma_2412(E,nu,U,X,xi,eta) % stress recover,
     Scenter = Sigma_raw_2412(E,nu,U,X,gp1,gp1);
     Fcenter = F_2412(U,X,gp1,gp1);
 
-    Ccenter = 1/det(Fcenter) * Fcenter * Scenter * Fcenter';
+    Ccenter = 1/det(Fcenter) * Fcenter * Scenter * Fcenter.';
 
     Sigma(1,2) = Ccenter(1,2);
     Sigma(2,1) = Ccenter(2,1);

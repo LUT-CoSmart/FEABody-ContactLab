@@ -1,11 +1,11 @@
-function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,GapfuncPairs,Perturbation,PointsofInterest)
+function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
+                                GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha)
     
     backtrack.meaning = false;% staring back track for the best solution to find an equlibrium
     approach.lambda.meaning = [];
-    approach.lambda.imax = 10;
-    % approach.penalty =1e9;  
+    approach.lambda.imax = 1; % activation maximal iterations for augumemted algorithms 
     approach.perturbation = Perturbation;
-    approach.ContactPointfunc = ContactPointfunc; % for augumented lagrange
+    approach.ContactPointfunc = ContactPointfunc;
     approach.numberOfPoints = PointsofInterest.n;
 
     % sanity check, that approach and subtype are correlating 
@@ -63,8 +63,19 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
     approach.Type = approachBasis;   
     approach.AimFunction = AimFunction;
     
+    % Activate backtracking algorithm
     if backtrack.meaning 
        backtrack.lambdaList  = [1.0, 0.5, 0.25, 0.125];   
     else
        backtrack.lambdaList = 1;
     end
+   
+
+    if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
+        [InitialContactPoints,~] = ContactPointfunc(ContactBody);
+        approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
+        approach.lambda.imax = 100;
+    end
+    
+    h  = min(ContactBody.Lx/ContactBody.nElems.x, TargetBody.Lx/TargetBody.nElems.x);
+    approach.penalty = alpha*max(ContactBody.E,TargetBody.E)/h;  

@@ -7,7 +7,7 @@ function [Fc,lambda_trial] = AugmentedContactForce(ContactBody,TargetBody,approa
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
 
-    [ContactPoints,ContactPointsElements] =ContactPointfunc(ContactBody);
+    [ContactPoints,ContactPointsElements,ContactAreas] =ContactPointfunc(ContactBody);
 
     numberOfPoints = size(ContactPoints,1);
 
@@ -31,7 +31,7 @@ function [Fc,lambda_trial] = AugmentedContactForce(ContactBody,TargetBody,approa
         end
 
         signedGap = Outcome.Gap;
-        lambda_trial(i) = max(0, lambda_old(i) - penalty*signedGap);
+        lambda_trial(i) = max(0, lambda_old(i) - penalty*ContactAreas(i)*signedGap);
 
         if lambda_trial(i) == 0
             continue
