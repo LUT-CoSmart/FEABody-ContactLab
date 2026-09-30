@@ -1,4 +1,10 @@
-clc, clear, close all
+%clc, clear, close all
+if ~exist('SWEEP','var')|| ~SWEEP % we have apper file to deal with    
+    clc, clear, close all    
+    SWEEP = false;
+end
+
+clear Body1 Body2 approach backtrack Result Assemblance BestStep Contact
 format long;
 addpath(genpath(pwd));
 
@@ -22,11 +28,11 @@ Body2.shift.x = 0;
 Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
-dx1 = 5;
-dy1 = 3;
+dx1 = 10;
+dy1 = 2;
 
 dx2 = 10;
-dy2 = 4;
+dy2 = 2;
 
 Body1.nElems.x = dx1;
 Body1.nElems.y = dy1;
@@ -51,7 +57,7 @@ Body2 = CreateBC(Body2,BCtype);
 %##################### Loadings ######################
 % local positions (assuming each body inside the square [(0.0)-(Lx,Ly)]
 Body1.Fext.x = 0; 
-Body1.Fext.y = -62.5*10^(6)*2;
+Body1.Fext.y = -5*10^(7);
 
 Body1.Fext.loc.x = Body1.Lx;
 Body1.Fext.loc.y = 'all';
@@ -74,13 +80,23 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ############################
 approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
-approachSubtype = "penalty-Nitsche";   
+ 
 % Subtypes
 % Penalty: Penalty, Augumented Lagrange,
 %          Nitsche, penalty-Nitsche,  Augumented Nitsche
 % Lagrange: Lagrange, perturbed Lagrange
+if ~SWEEP 
+    approachSubtype = "penalty-Nitsche";
+    alpha = 10;
+    %##################### Newton iter. parameters ######################
+    imax = 50; 
+    tol=1e-3;   
+    Loadtype = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
+    steps= 40;
+    Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
+end
 
-PointsofInterest.Name = "nodes"; % options: "nodes", "Gauss", "LinSpace" 
+PointsofInterest.Name = "Gauss"; % options: "nodes", "Gauss", "LinSpace" 
 PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 
 % ==============================================================================================================
@@ -92,21 +108,18 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest,approachBasis);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
-alpha = 10;% the one parameter to sweep
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
                        GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha);
-%##################### Newton iter. parameters ######################
-imax = 20; 
-tol=1e-4;   
-Loadtype = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 10;
-Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
+
 %#################### Processing ######################
 
 total_steps = 0;
 titertot=0;  
+Niter = 0; 
+failed = false;
 
 for ii = 1:steps
+
 
         approach.lambda.step = 0;
         approach.lambda.converge = false;  
@@ -124,6 +137,7 @@ for ii = 1:steps
 
                     for jj = 1:imax % contact convergence
                         tic;
+                        Niter = Niter + 1;
                         % interaction of two bodies
                         [DofsFunction, Stiffness] = Contact(Body1,Body2,approach,jj,Solution);
         
@@ -137,20 +151,26 @@ for ii = 1:steps
                         titer=toc;
                         titertot=titertot+titer;
         
-                        if printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap)
-                            break;  
-                        end  
+                        conv = printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap);
+                        if conv
+                            break;
+                        end
     
                         [Body1,Body2] = BestStep(backtrack,lambdaBackTrack,Gap,Body1,Body2,deltaf,jj,imax);
     
                     end
-    
-                    if jj < imax % it is needed for exit from the second loop (exit from backtrack)
+                    if conv % to be sure we have converged 
+                        break;
+                    end
+
+                    if jj <= imax % it is needed for exit from the second loop (exit from backtrack)
                         break;
                     end
 
                 end
-
+                if ~conv % remember it , for paper checking
+                    failed = true; 
+                end  
                 if  approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || ...
                     approachSubtype == "Augumented Nitsche"
                     
@@ -163,14 +183,44 @@ for ii = 1:steps
                     approach.lambda.converge = true;
                 end                
         end
-
+        if ~approach.lambda.converge % outer loop did not converge
+            failed = true;
+            break;
+        end  
+        if failed
+            break
+        end             
         Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number) 
         Body2 = SaveResults(Body2,ii,"last");
 
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% ---------- Metrics for the alpha sweep ----------
+[MeanPenetration, MaxPenetration] = Gapfunc(Body1,Body2);   % [m]
+AccuracyError = Inf;                                        % failed run = never accurate
+if ~failed
+    AccuracyError = MaxPenetration/approach.h;              % max penetration / element size [-]
+end
+AlphaEffective = alpha;                                     % penalty-Nitsche raises its own alpha
+if approach.Name == "penalty-Nitsche"
+    AlphaEffective = max(alpha, max(alpha*approach.lambda.meaning/approach.penalty));
+end
+Result = struct('NewtonIterations',  Niter, ...                        % all Newton iterations of the run
+                'AccuracyError',     AccuracyError, ...
+                'AccuracyType',      "max penetration / h", ...
+                'MeanPenetration_h', MeanPenetration/approach.h, ...
+                'MaxPenetration_h',  MaxPenetration/approach.h, ...
+                'Failed',            failed, ...
+                'CPUTime_s',         titertot, ...
+                'AlphaEffective',    AlphaEffective);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 % %##################### Post-Processing ######################
 ShowVisualization = true;
 ShowNodeNumbers = true;
 WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM" 
-PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
-
+if ~SWEEP
+    PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
+end

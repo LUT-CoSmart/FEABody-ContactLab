@@ -1,8 +1,14 @@
-clc, clear, close all
+% Run alone: clears everything and uses the method/alpha set below.
+% Run from SweepAlpha.m: SWEEP = true, method and alpha come from the sweep.
+if ~exist('SWEEP','var') || ~SWEEP
+    clc, clear, close all
+    SWEEP = false;
+end
+clear Body1 Body2 Body2Left Body2Right approach backtrack   % never reuse bodies from a previous run
 format long;
 addpath(genpath(pwd));
 
-p = 5e9;    
+p = 2e7;    % pressure [Pa]. Small (p/E = 1e-4) so the exact small-strain solution below is valid
 W = 5;
 
 %########## Bodies Data : Element positioning (from (0.0) coord. ) ########
@@ -25,11 +31,11 @@ Body2.shift.x = 0;
 Body2.shift.y = 0;
 
 %#################### Mesh #########################################
-dx1 = 50;
-dy1 = 20;
+dx1 = 8;
+dy1 = 4;
 
-dx2 = 100;
-dy2 = 40;
+dx2 = 20;
+dy2 = 8;
 
 Body1.nElems.x = dx1;
 Body1.nElems.y = dy1;
@@ -62,6 +68,24 @@ Body1.Fext.y = -p*Body1.Lx*Body1.Lz;
 Body1.Fext.loc.x = 'all';
 Body1.Fext.loc.y = Body1.Ly;
 
+% Same pressure on the exposed top parts of the lower block (left and right of the upper block).
+% Needed for the exact patch-test solution (uniform sigma_yy = -p in both bodies).
+% Mesh requirement: x = W and x = W + Body1.Lx must be nodes of Body2.
+LoadExposedParts = true;
+if LoadExposedParts
+    Body2Left = Body2;                                   % copy, used only to build the load on [0, W]
+    Body2Left.Fext.x = 0;
+    Body2Left.Fext.y = -p*W*Body2.Lz;
+    Body2Left.Fext.loc.x = [0 W];
+    Body2Left.Fext.loc.y = Body2.Ly;
+
+    Body2Right = Body2;                                  % copy, used only to build the load on [W+Lx1, Lx2]
+    Body2Right.Fext.x = 0;
+    Body2Right.Fext.y = -p*(Body2.Lx - W - Body1.Lx)*Body2.Lz;
+    Body2Right.Fext.loc.x = [W+Body1.Lx, Body2.Lx];
+    Body2Right.Fext.loc.y = Body2.Ly;
+end
+
 %##################### Contact surfaces #############################
 Body1.contact.loc.x = 'all';
 Body1.contact.loc.y = 0;
@@ -73,93 +97,163 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ######################################
 approachBasis = "Penalty";
-approachSubtype = "penalty-Nitsche"; 
+if ~SWEEP
+    approachSubtype = "Nitsche";
+    alpha = 10;   % the one parameter to sweep
+end
 PointsofInterest.Name = "Gauss";
-PointsofInterest.n = 1;
+PointsofInterest.n = 3;
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest,approachBasis);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
-alpha = 10;% the one parameter to sweep
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
                        GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha);
 
+if SWEEP   % same globalization (plain Newton-Raphson, no backtracking) for all methods in the sweep
+    backtrack.meaning = false;
+    backtrack.lambdaList = 1;
+end
+
 %##################### Newton iter. parameters ######################
-imax = 20; 
-tol=1e-4;   
+imax = 20;
+tol=1e-4;
 LoadType = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
 steps= 1;
-Solution = "Newton-Broyden"; % Options: Newton-Rapson, Newton-Broyden
+Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 %#################### Processing ######################
 
 total_steps = 0;
-titertot=0;  
-
+titertot=0;
+Niter = 0;          % all Newton iterations of the run (load steps x outer loops x backtracking)
+failed = false;     % true if any load step did not converge
 
 for ii = 1:steps
 
         approach.lambda.step = 0;
-        approach.lambda.converge = false;  
-        
+        approach.lambda.converge = false;
+
         Body1 = CreateFext(ii,steps,Body1,LoadType);
-        Body2 = CreateFext(ii,steps,Body2,LoadType);
-        
-        while (~approach.lambda.converge) && (approach.lambda.step < approach.lambda.imax)% special case for Augumented Lagrange    
-                approach.lambda.step = approach.lambda.step + 1;    
+        if LoadExposedParts
+            Body2Left  = CreateFext(ii,steps,Body2Left,LoadType);
+            Body2Right = CreateFext(ii,steps,Body2Right,LoadType);
+            Body2.Fext = Body2Left.Fext;                                   % keeps nodalid for SaveResults
+            Body2.Fext.vec = Body2Left.Fext.vec + Body2Right.Fext.vec;     % load on both exposed parts
+        else
+            Body2 = CreateFext(ii,steps,Body2,LoadType);
+        end
+
+        while (~approach.lambda.converge) && (approach.lambda.step < approach.lambda.imax)% special case for Augumented Lagrange
+                approach.lambda.step = approach.lambda.step + 1;
                 for lambdaBackTrack = backtrack.lambdaList % backtrack loop
 
                     if lambdaBackTrack < 1
-                        fprintf("!!! Starting  Backtrack for lambda = %f !!!! \n",lambdaBackTrack)            
-                    end 
+                        fprintf("!!! Starting  Backtrack for lambda = %f !!!! \n",lambdaBackTrack)
+                    end
 
                     for jj = 1:imax % contact convergence
                         tic;
+                        Niter = Niter + 1;
                         % interaction of two bodies
                         [DofsFunction, Stiffness] = Contact(Body1,Body2,approach,jj,Solution);
-        
+
                         [Gap,GapMax] = Gapfunc(Body1,Body2);
                         % inner forces of the each body
                         Body1 = Elastic(Body1);
                         Body2 = Elastic(Body2);
 
                         [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(jj,Solution,Body1, Body2, DofsFunction,Stiffness,approach,lambdaBackTrack);
-                      
+
                         titer=toc;
                         titertot=titertot+titer;
-        
-                        if printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap)
-                            break;  
-                        end  
-    
+
+                        conv = printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap);
+                        if conv
+                            break;
+                        end
+
                         [Body1,Body2] = BestStep(backtrack,lambdaBackTrack,Gap,Body1,Body2,deltaf,jj,imax);
-    
+
                     end
-    
-                    if jj < imax % it is needed for exit from the second loop (exit from backtrack)
+                    if conv % converged -> no further backtracking
                         break;
                     end
+                end
 
+                if ~conv % step failed: remember it and leave the outer (augmented) loop
+                    failed = true;
+                    break;
                 end
 
                 if  approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || ...
                     approachSubtype == "Augumented Nitsche"
-                    
-                    lambda_old = approach.lambda.meaning;        
+
+                    lambda_old = approach.lambda.meaning;
                     [~,lambda_next] = approach.AimFunction(Body1,Body2,approach);
-                    approach.lambda.converge = norm(lambda_next-lambda_old)/ max(1,norm(lambda_next)) < tol;                             
-                    approach.lambda.meaning = lambda_next; 
+                    approach.lambda.converge = norm(lambda_next-lambda_old)/ max(1,norm(lambda_next)) < tol;
+                    approach.lambda.meaning = lambda_next;
 
                 else
                     approach.lambda.converge = true;
-                end                
+                end
+        end
+        if ~approach.lambda.converge % outer loop did not converge
+            failed = true;
+        end
+        if failed
+            break
         end
 
-        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number) 
+        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number)
         Body2 = SaveResults(Body2,ii,"last");
 
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Metrics for the alpha sweep %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+[MeanPenetration, MaxPenetration] = Gapfunc(Body1,Body2);   % [m]
+
+if LoadExposedParts
+    % Exact small-strain, plane-stress solution (both bodies have the same E and nu):
+    %   u_x = nu*p/E*(x - x_pin),   u_y = -p/E*y
+    % x_pin = x of the horizontally fixed node of each body (frictionless contact -> each body has its own)
+    StrainX = Body1.nu*p/Body1.E;
+    StrainY = -p/Body1.E;
+    PinX1   = Body1.shift.x + Body1.Lx/2;
+    PinX2   = Body2.shift.x + Body2.Lx/2;
+    ExactU1 = [StrainX*(Body1.P0(:,1) - PinX1), StrainY*Body1.P0(:,2)]';   % 2 x number of nodes
+    ExactU2 = [StrainX*(Body2.P0(:,1) - PinX2), StrainY*Body2.P0(:,2)]';
+    NodalError = [vecnorm(reshape(Body1.u,2,[]) - ExactU1), vecnorm(reshape(Body2.u,2,[]) - ExactU2)];
+    ErrorValue   = max(NodalError) / max([vecnorm(ExactU1), vecnorm(ExactU2)]);
+    AccuracyType = "max nodal displacement error / max exact displacement";
+else
+    % no exact solution without the load on the exposed parts -> constraint satisfaction only
+    ErrorValue   = MaxPenetration/approach.h;
+    AccuracyType = "max penetration / h";
+end
+
+AccuracyError = Inf;                                        % failed run = never counted as accurate
+if ~failed
+    AccuracyError = ErrorValue;
+end
+
+AlphaEffective = alpha;                                     % penalty-Nitsche raises its own alpha
+if approach.Name == "penalty-Nitsche"
+    AlphaEffective = max(alpha, max(alpha*approach.lambda.meaning/approach.penalty));
+end
+
+Result = struct('NewtonIterations',  Niter, ...
+                'AccuracyError',     AccuracyError, ...
+                'AccuracyType',      AccuracyType, ...
+                'MeanPenetration_h', MeanPenetration/approach.h, ...
+                'MaxPenetration_h',  MaxPenetration/approach.h, ...
+                'Failed',            failed, ...
+                'CPUTime_s',         titertot, ...
+                'AlphaEffective',    AlphaEffective);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % %##################### Post-Processing ######################
 ShowVisualization = true;
 ShowNodeNumbers = false;
-WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM" 
-PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
+WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM"
+if ~SWEEP
+    PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
+end

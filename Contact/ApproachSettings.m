@@ -1,7 +1,7 @@
 function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
                                 GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha)
     
-    backtrack.meaning = false;% staring back track for the best solution to find an equlibrium
+    backtrack.meaning = true;% staring back track for the best solution to find an equlibrium
     approach.lambda.meaning = [];
     approach.lambda.imax = 1; % activation maximal iterations for augumemted algorithms 
     approach.perturbation = Perturbation;
@@ -81,4 +81,7 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
     else
        backtrack.lambdaList = 1;
     end
-   
+    
+    % for post process
+    approach.alpha = alpha;                      
+    approach.h     = h;                       

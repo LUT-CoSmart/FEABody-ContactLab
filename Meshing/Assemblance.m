@@ -47,8 +47,7 @@ function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(iteration,Solution,
     
     if Solution == "Newton-Rapson" || (Solution == "Newton-Broyden" && iteration == 1)
         num = cond(K_bc);
-        Bn_m1 = inv(K_bc);
-        if num > 1e12
+        if num > 1e13
            D = diag(1./sqrt(sum(K_bc.^2,2)));          
            Bn_m1 = (D*K_bc)\D;
         else 

@@ -1,8 +1,8 @@
 function PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc,Gapfunc,Solution,PointsofInterest)
 
-    if approachSubtype == "penalty-Nitsche"
-        alpha_eff = alpha * approach.lambda.meaning / approach.penalty;
-        fprintf('penalty-Nitsche: alpha = %g, alpha_eff: mean = %g, max = %g\n',alpha, mean(alpha_eff), max(alpha_eff));
+    if approach.Name == "penalty-Nitsche"
+        alpha_eff = approach.alpha * approach.lambda.meaning / approach.penalty;
+        fprintf('penalty-Nitsche: alpha = %g, alpha_eff: mean = %g, max = %g\n', approach.alpha, mean(alpha_eff), max(alpha_eff));
     end
     
     PrintResults(Body1)
@@ -21,7 +21,7 @@ function PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbe
         Gap =  Gapfunc(Body1,Body2);
         gapStr = sprintf('%.5f', Gap);
         fullstr = "Solution method - " + Solution +", Contact method = " + approach.Name + ...
-                   ", Contact points choice = " + PointsofInterest.Name + ", Total Gap = " + gapStr;
+                   ", Contact points choice = " + PointsofInterest.Name + ", mean penetration = " + gapStr;
         title(fullstr, 'Interpreter', 'latex','FontSize', 15);
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end    
