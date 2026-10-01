@@ -196,15 +196,15 @@ for ii = 1:steps
                     approach.lambda.converge = true;
                 end
         end
+
+        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number)
+        Body2 = SaveResults(Body2,ii,"last");
         if ~approach.lambda.converge % outer loop did not converge
             failed = true;
         end
         if failed
             break
         end
-
-        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number)
-        Body2 = SaveResults(Body2,ii,"last");
 
 end
 

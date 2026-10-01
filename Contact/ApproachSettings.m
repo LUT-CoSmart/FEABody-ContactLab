@@ -1,5 +1,5 @@
 function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                                GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha)
+                                GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha,tol)
     
     backtrack.meaning = true;% staring back track for the best solution to find an equlibrium
     approach.lambda.meaning = [];
@@ -49,19 +49,16 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
             AimFunction = @(Body1,Body2,approach) AugmentedContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "penalty-Nitsche"
-            backtrack.meaning = true;
-            approach.gapTolerance = 1e-4*h;
+            approach.gapTolerance = tol*h;
             AimFunction = @(Body1,Body2,approach) PenaltyNitscheContactForce(Body1,Body2,approach);
             
         elseif approachSubtype == "Augumented Nitsche"          
             AimFunction = @(Body1,Body2,approach) AugmentedNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"
-            backtrack.meaning = true;
             AimFunction = @(Body1,Body2,approach) PenaltyContactForce(Body1,Body2,approach);
         
         elseif approachSubtype == "Nitsche"
-            backtrack.meaning = true;
             AimFunction = @(Body1,Body2,approach) NitscheContactForce(Body1,Body2,approach);
         end
                     

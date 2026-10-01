@@ -7,13 +7,13 @@ if SWEEP
     imax = 30; 
     tol=1e-3;   
     Loadtype = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-    steps= 50;
+    steps= 100;
     Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 end
 
 CaseName    = 'LayredBeams'; % 'PatchTest' or 'LayredBeams'
-Methods     = ["Nitsche","Penalty","Augumented Lagrange","penalty-Nitsche","Augumented Nitsche"];
-Alphas      = 10.^[-3 -2 -1 -0 1 2];
+Methods     = ["penalty-Nitsche","Nitsche","Penalty","Augumented Lagrange","Augumented Nitsche"];
+Alphas      = 10.^[0 1 2 3];
 AccuracyTol = tol;          % a run counts as accurate if AccuracyError <= AccuracyTol
 
 Table = table();

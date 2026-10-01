@@ -2,9 +2,10 @@
 if ~exist('SWEEP','var')|| ~SWEEP % we have apper file to deal with    
     clc, clear, close all    
     SWEEP = false;
+else
+    clear Body1 Body2 approach backtrack Result Assemblance BestStep Contact
 end
 
-clear Body1 Body2 approach backtrack Result Assemblance BestStep Contact
 format long;
 addpath(genpath(pwd));
 
@@ -28,10 +29,10 @@ Body2.shift.x = 0;
 Body2.shift.y = -Body2.Ly;
 
 %#################### Mesh #########################################
-dx1 = 10;
+dx1 = 8;
 dy1 = 2;
 
-dx2 = 10;
+dx2 = 8;
 dy2 = 2;
 
 Body1.nElems.x = dx1;
@@ -57,7 +58,7 @@ Body2 = CreateBC(Body2,BCtype);
 %##################### Loadings ######################
 % local positions (assuming each body inside the square [(0.0)-(Lx,Ly)]
 Body1.Fext.x = 0; 
-Body1.Fext.y = -5*10^(7);
+Body1.Fext.y = -1*10^(8);
 
 Body1.Fext.loc.x = Body1.Lx;
 Body1.Fext.loc.y = 'all';
@@ -86,13 +87,13 @@ approachBasis = "Penalty";  % Options: None, Penalty, Lagrange
 %          Nitsche, penalty-Nitsche,  Augumented Nitsche
 % Lagrange: Lagrange, perturbed Lagrange
 if ~SWEEP 
-    approachSubtype = "penalty-Nitsche";
-    alpha = 10;
+    approachSubtype = "Augumented Nitsche";
+    alpha = 0.1;
     %##################### Newton iter. parameters ######################
     imax = 50; 
     tol=1e-3;   
     Loadtype = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-    steps= 40;
+    steps= 10;
     Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 end
 
@@ -109,7 +110,7 @@ PointsofInterest.n = 1; % number of points per segment (Gauss & LinSpace points)
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha);
+                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha,tol);
 
 %#################### Processing ######################
 
@@ -163,10 +164,6 @@ for ii = 1:steps
                         break;
                     end
 
-                    if jj <= imax % it is needed for exit from the second loop (exit from backtrack)
-                        break;
-                    end
-
                 end
                 if ~conv % remember it , for paper checking
                     failed = true; 
@@ -183,16 +180,16 @@ for ii = 1:steps
                     approach.lambda.converge = true;
                 end                
         end
+        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number) 
+        Body2 = SaveResults(Body2,ii,"last");
+
         if ~approach.lambda.converge % outer loop did not converge
             failed = true;
             break;
         end  
         if failed
             break
-        end             
-        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number) 
-        Body2 = SaveResults(Body2,ii,"last");
-
+        end                    
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
