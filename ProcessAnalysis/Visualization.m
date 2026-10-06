@@ -1,6 +1,13 @@
  
 function Visualization(Body,vis, ShowNodeNumbers)
     
+    if nargin < 3
+        ShowNodeNumbers = false;          % default text when only 2 arguments are given
+    end
+    if nargin < 2  
+        vis = "u_total";
+    end
+    
     FontSize = 10;
     DofsAtNode = Body.DofsAtNode;
     nl=Body.nElems.x * Body.nElems.y;    % computes number of elements

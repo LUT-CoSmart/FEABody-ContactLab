@@ -14,7 +14,7 @@ function [DofsFunction,Stiffness] = Contact(Body1,Body2,approach,step,Solution)
             switch approach.perturbation   
                 case "automatic"
                     DofsFunction_y = @(t,y) AimFunctionWrapper(t,y,Body1,Body2,AimFunction);
-                    Stiffness = numjac(DofsFunction_y,0,[Body1.u(:);Body2.u(:)], DofsFunction,1e-3,[]);
+                    Stiffness = numjac(DofsFunction_y,0,[Body1.u(:);Body2.u(:)], DofsFunction,1e-4*approach.h,[]);
     
                 case "incremental"
                     Stiffness = Jacobian(Body1,Body2,AimFunction);

@@ -2,6 +2,16 @@ function Body = CreateFEMesh(Body)
 
 DofsAtNode = 2;
 
+if ~isfield(Body,'shift')
+    Body.shift   = struct(); 
+end
+if ~isfield(Body.shift,'x') 
+    Body.shift.x = 0;        
+end
+if ~isfield(Body.shift,'y')
+    Body.shift.y = 0;        
+end
+
 [Body.P0,Body.nloc] = recmesh2412(Body.Lx,Body.Ly,Body.shift,Body.nElems);
 Body.xloc=xlocAll2412(Body.nloc);
 

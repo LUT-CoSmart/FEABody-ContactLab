@@ -2,7 +2,7 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
     ContactPointfunc = approach.ContactPointfunc;
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
-    
+    theta = approach.theta;
     [ContactPoints,ContactPointsElements,ContactAreas] = ContactPointfunc(ContactBody);
     numberOfPoints = size(ContactPoints,1);
     
@@ -51,11 +51,14 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         dsigma_targ = 0.5*dsigma_targ;
                 
         % at the end: g ->0; lambda-> -sigma_nn
-        lambda_trial(i) = max(0,  0.5*(lambda_old(i) - signedGap/gamma - sigma_nn));           
-        stressMismatch = lambda_trial(i) + sigma_nn;
+        % lambda_old = stored correction mu (pressure minus bulk stress estimate), zero at start -> first pass = Nitsche
+        pressure       = max(0, lambda_old(i) - sigma_nn - signedGap/gamma);
+        stressMismatch = pressure + sigma_nn;
          
-        Fcont_loc =  lambda_trial(i)*(Nm_cont.'*Normal_cont) - gamma*stressMismatch*dsigma_cont;       
-        Ftarg_loc =  lambda_trial(i)*(Nm_targ.'*Normal_targ) - gamma*stressMismatch*dsigma_targ;
+        Fcont_loc =  pressure*(Nm_cont.'*Normal_cont) - theta*gamma*stressMismatch*dsigma_cont;       
+        Ftarg_loc =  pressure*(Nm_targ.'*Normal_targ) - theta*gamma*stressMismatch*dsigma_targ;
+
+        lambda_trial(i) = stressMismatch;   % next mu = pressure + sigma_nn  ->  at convergence gap = 0 on contact points
         
         % Redistribution over the nodes
         DOFpositions_cont = ContactBody.xloc(element_cont,:);

@@ -2,7 +2,7 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
     ContactPointfunc = approach.ContactPointfunc;
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
-
+    theta = approach.theta;
     [ContactPoints,ContactPointsElements,ContactAreas] = ContactPointfunc(ContactBody); 
     numberOfPoints = size(ContactPoints,1); 
     maxPenetration = 0; 
@@ -68,8 +68,8 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForce(ContactBody,T
                
         pressure = max(0, -sigma_nn - signedGap/gamma);
                 
-        Fcont_loc = ContactAreas(i)*(pressure*(Nm_cont.'*Normal_cont) - gamma*(sigma_nn + pressure)*dsigma_cont);        
-        Ftarg_loc = ContactAreas(i)*(pressure*(Nm_targ.'*Normal_targ) - gamma*(sigma_nn + pressure)*dsigma_targ);
+        Fcont_loc = ContactAreas(i)*(pressure*(Nm_cont.'*Normal_cont) - theta*gamma*(sigma_nn + pressure)*dsigma_cont);        
+        Ftarg_loc = ContactAreas(i)*(pressure*(Nm_targ.'*Normal_targ) - theta*gamma*(sigma_nn + pressure)*dsigma_targ);
 
         DOFpositions_cont = ContactBody.xloc(element_cont,:); 
         DOFpositions_targ = TargetBody.xloc(element_targ,:); 

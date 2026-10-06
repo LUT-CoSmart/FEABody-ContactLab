@@ -1,5 +1,5 @@
 function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                                GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha,tol)
+                                GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha,PenetrationTol)
     
     backtrack.meaning = true;% staring back track for the best solution to find an equlibrium
     approach.lambda.meaning = [];
@@ -7,8 +7,6 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
     approach.perturbation = Perturbation;
     approach.ContactPointfunc = ContactPointfunc;
     approach.numberOfPoints = PointsofInterest.n;
-    
-
     if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
         [InitialContactPoints,~] = ContactPointfunc(ContactBody);
         approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
@@ -49,10 +47,11 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
             AimFunction = @(Body1,Body2,approach) AugmentedContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "penalty-Nitsche"
-            approach.gapTolerance = tol*h;
+            approach.gapTolerance = PenetrationTol*h;
             AimFunction = @(Body1,Body2,approach) PenaltyNitscheContactForce(Body1,Body2,approach);
             
-        elseif approachSubtype == "Augumented Nitsche"          
+        elseif approachSubtype == "Augumented Nitsche"   
+            approach.theta
             AimFunction = @(Body1,Body2,approach) AugmentedNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"

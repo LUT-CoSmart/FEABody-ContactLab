@@ -1,10 +1,12 @@
-% Run alone: clears everything and uses the method/alpha set below.
-% Run from SweepAlpha.m: SWEEP = true, method and alpha come from the sweep.
-if ~exist('SWEEP','var') || ~SWEEP
-    clc, clear, close all
+%% From Kim J. H. et Al., 1976
+clc, clear, close all
+if ~exist('SWEEP','var')|| ~SWEEP % we have apper file to deal with    
+    clc, clear, close all    
     SWEEP = false;
+else
+    clear Body1 Body2 approach backtrack Result Assemblance BestStep Contact
 end
-clear Body1 Body2 Body2Left Body2Right approach backtrack   % never reuse bodies from a previous run
+
 format long;
 addpath(genpath(pwd));
 
@@ -18,18 +20,16 @@ Body1.Ly = 5;
 Body1.Lz = 0.1;
 Body1.E=2e11;
 Body1.nu=0.28;
-Body1.shift.x = W;
-% Body1.shift.y = 5;
-Body1.shift.y = 5 - 1e-9;   % tiny initial overlap -> contact is active at iteration 1
+
 % Body 2
 Body2.Lx = 20;
 Body2.Ly = 5;
 Body2.Lz = 0.1;
 Body2.E=2e11;
 Body2.nu=0.28;
-Body2.shift.x = 0;
-Body2.shift.y = 0;
 
+Body1.shift.x = W;
+Body1.shift.y = Body2.Ly - 1e-7;   % tiny initial overlap -> contact is active at iteration 1
 %#################### Mesh #########################################
 dx1 = 8;
 dy1 = 4;
@@ -56,7 +56,7 @@ Body2.loc.x = 'all';
 Body2.loc.y = 0;
 Body2 = CreateBC(Body2,'uy');
 
-% % Lower midpoint pin: additionally fix its horizontal displacement.
+% Lower midpoint pin: additionally fix its horizontal displacement.
 Body2.loc.x = Body2.Lx/2;
 Body2.loc.y = 0;
 Body2 = CreateBC(Body2,'ux');
@@ -96,36 +96,46 @@ Body2.contact.loc.y = Body2.Ly;
 Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 
 %##################### Contact ######################################
-approachBasis = "Penalty";
-if ~SWEEP
-    approachSubtype = "Nitsche";
-    alpha = 10;   % the one parameter to sweep
+
+% Subtypes
+% Penalty: Penalty, Augumented Lagrange,
+%          Nitsche, penalty-Nitsche,  Augumented Nitsche
+% Lagrange: Lagrange, perturbed Lagrange
+if ~SWEEP 
+    approachBasis = "Penalty";
+    approachSubtype = "penalty-Nitsche";
+    alpha = 0.10;
+    %##################### Newton iter. parameters ######################
+    imax = 50; 
+    tol=1e-3;   
+    LoadType = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
+    steps= 20;
+    Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
+    PenetrationTol = 1e-7;
+    ShowVisualization = true;
+    ShowNodeNumbers = true;
+    WhatoToShow = "sigma_yy"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM" 
 end
+
 PointsofInterest.Name = "Gauss";
-PointsofInterest.n = 3;
+PointsofInterest.n = 1;
+
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest,approachBasis);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha);
+                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha,PenetrationTol);
+if ~SWEEP
+    approach.theta = -1;
+else
+    approach.theta = theta;
+end  
 
-if SWEEP   % same globalization (plain Newton-Raphson, no backtracking) for all methods in the sweep
-    backtrack.meaning = false;
-    backtrack.lambdaList = 1;
-end
-
-%##################### Newton iter. parameters ######################
-imax = 20;
-tol=1e-4;
-LoadType = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-steps= 1;
-Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
 %#################### Processing ######################
-
 total_steps = 0;
-titertot=0;
-Niter = 0;          % all Newton iterations of the run (load steps x outer loops x backtracking)
-failed = false;     % true if any load step did not converge
+titertot=0;  
+Niter = 0; 
+failed = false;
 
 for ii = 1:steps
 
@@ -142,69 +152,69 @@ for ii = 1:steps
             Body2 = CreateFext(ii,steps,Body2,LoadType);
         end
 
-        while (~approach.lambda.converge) && (approach.lambda.step < approach.lambda.imax)% special case for Augumented Lagrange
-                approach.lambda.step = approach.lambda.step + 1;
+        while (~approach.lambda.converge) && (approach.lambda.step < approach.lambda.imax)% special case for Augumented Lagrange    
+                approach.lambda.step = approach.lambda.step + 1;    
                 for lambdaBackTrack = backtrack.lambdaList % backtrack loop
 
                     if lambdaBackTrack < 1
-                        fprintf("!!! Starting  Backtrack for lambda = %f !!!! \n",lambdaBackTrack)
-                    end
+                        fprintf("!!! Starting  Backtrack for lambda = %f !!!! \n",lambdaBackTrack)            
+                    end 
 
                     for jj = 1:imax % contact convergence
                         tic;
                         Niter = Niter + 1;
                         % interaction of two bodies
                         [DofsFunction, Stiffness] = Contact(Body1,Body2,approach,jj,Solution);
-
-                        [Gap,GapMax] = Gapfunc(Body1,Body2);
+        
+                        Gap = Gapfunc(Body1,Body2);
                         % inner forces of the each body
                         Body1 = Elastic(Body1);
                         Body2 = Elastic(Body2);
 
                         [Body1, Body2, uu_bc, deltaf, lambda_next] = Assemblance(jj,Solution,Body1, Body2, DofsFunction,Stiffness,approach,lambdaBackTrack);
-
+                      
                         titer=toc;
                         titertot=titertot+titer;
-
+        
                         conv = printStatus(approachBasis, deltaf, uu_bc, tol, ii, jj, imax, steps, titertot, Gap);
                         if conv
                             break;
                         end
-
+    
                         [Body1,Body2] = BestStep(backtrack,lambdaBackTrack,Gap,Body1,Body2,deltaf,jj,imax);
-
+    
                     end
-                    if conv % converged -> no further backtracking
+                    if conv % to be sure we have converged 
                         break;
                     end
-                end
 
-                if ~conv % step failed: remember it and leave the outer (augmented) loop
-                    failed = true;
-                    break;
                 end
-
+                if ~conv % remember it , for paper checking
+                    failed = true; 
+                    break; 
+                end  
                 if  approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || ...
                     approachSubtype == "Augumented Nitsche"
-
-                    lambda_old = approach.lambda.meaning;
+                    
+                    lambda_old = approach.lambda.meaning;        
                     [~,lambda_next] = approach.AimFunction(Body1,Body2,approach);
-                    approach.lambda.converge = norm(lambda_next-lambda_old)/ max(1,norm(lambda_next)) < tol;
-                    approach.lambda.meaning = lambda_next;
+                    approach.lambda.converge = norm(lambda_next-lambda_old)/ max(1,norm(lambda_next)) < tol;                             
+                    approach.lambda.meaning = lambda_next; 
 
                 else
                     approach.lambda.converge = true;
-                end
+                end                
         end
-
-        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number)
+        Body1 = SaveResults(Body1,ii,"last"); % options: "all", "last", each by (number) 
         Body2 = SaveResults(Body2,ii,"last");
+
         if ~approach.lambda.converge % outer loop did not converge
             failed = true;
-        end
+            break;
+        end  
         if failed
             break
-        end
+        end  
 
 end
 
@@ -249,11 +259,7 @@ Result = struct('NewtonIterations',  Niter, ...
                 'CPUTime_s',         titertot, ...
                 'AlphaEffective',    AlphaEffective);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % %##################### Post-Processing ######################
-ShowVisualization = true;
-ShowNodeNumbers = false;
-WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM"
 if ~SWEEP
     PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
 end

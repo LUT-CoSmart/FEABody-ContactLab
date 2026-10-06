@@ -2,7 +2,7 @@ function Fc = NitscheContactForce(ContactBody,TargetBody,approach)
     ContactPointfunc = approach.ContactPointfunc;
     Fcont = zeros(ContactBody.nx,1);
     Ftarg = zeros(TargetBody.nx,1);
-    
+    theta = approach.theta;
     [ContactPoints,ContactPointsElements,ContactAreas] = ContactPointfunc(ContactBody);
     numberOfPoints = size(ContactPoints,1);
     
@@ -48,8 +48,8 @@ function Fc = NitscheContactForce(ContactBody,TargetBody,approach)
         Pgamma = penetration-gamma*sigma_nn;
         Pgamma = max(0,Pgamma); % this is from (Chouly et. al. 2012)
         
-        Fcont_loc = -gamma*sigma_nn*dsigma_cont+(Pgamma/gamma)*(Nm_cont.'*Normal_cont-gamma*dsigma_cont);
-        Ftarg_loc = -gamma*sigma_nn*dsigma_targ+(Pgamma/gamma)*(Nm_targ.'*Normal_targ-gamma*dsigma_targ);
+        Fcont_loc = -theta*gamma*sigma_nn*dsigma_cont+(Pgamma/gamma)*(Nm_cont.'*Normal_cont-theta*gamma*dsigma_cont);
+        Ftarg_loc = -theta*gamma*sigma_nn*dsigma_targ+(Pgamma/gamma)*(Nm_targ.'*Normal_targ-theta*gamma*dsigma_targ);
         
         DOFpositions_cont = ContactBody.xloc(element_cont,:);
         DOFpositions_targ = TargetBody.xloc(element_targ,:);
