@@ -82,6 +82,6 @@ sigma = DD * eps;
 Sigma = [sigma(1) sigma(3);
          sigma(3) sigma(2)];
 
-matlabFunction(dFeV,'file','dFe_2412V','vars',{E,nu,Lz,uu,X,xi,eta});
-matlabFunction(dFeS,'file','dFe_2412S','vars',{E,nu,Lz,uu,X,xi,eta});
-matlabFunction(Sigma,'file','Sigma_raw_2412','vars',{E,nu,uu,X,xi,eta});
+matlabFunction(dFeV,'file','dFe_2412V_KS','vars',{E,nu,Lz,uu,X,xi,eta});
+matlabFunction(dFeS,'file','dFe_2412S_KS','vars',{E,nu,Lz,uu,X,xi,eta});
+matlabFunction(Sigma,'file','Sigma_raw_2412_KS','vars',{E,nu,uu,X,xi,eta});

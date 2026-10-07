@@ -20,6 +20,7 @@ Body1.Ly = 5;
 Body1.Lz = 0.1;
 Body1.E=2e11;
 Body1.nu=0.28;
+Body1 = SetMaterial(Body1, "KS"); 
 
 % Body 2
 Body2.Lx = 20;
@@ -27,6 +28,7 @@ Body2.Ly = 5;
 Body2.Lz = 0.1;
 Body2.E=2e11;
 Body2.nu=0.28;
+Body2 = SetMaterial(Body2, "KS"); 
 
 Body1.shift.x = W;
 Body1.shift.y = Body2.Ly - 1e-7;   % tiny initial overlap -> contact is active at iteration 1
@@ -109,7 +111,7 @@ if ~SWEEP
     imax = 50; 
     tol=1e-3;   
     LoadType = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-    steps= 20;
+    steps= 1;
     Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
     PenetrationTol = 1e-7;
     ShowVisualization = true;

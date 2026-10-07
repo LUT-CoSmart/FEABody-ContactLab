@@ -11,6 +11,7 @@ function Visualization(Body,vis, ShowNodeNumbers)
     FontSize = 10;
     DofsAtNode = Body.DofsAtNode;
     nl=Body.nElems.x * Body.nElems.y;    % computes number of elements
+    StressFunction = Body.StressFunction;
     if vis ~= "frame"
         node = reshape(Body.q + Body.u, 2, []).';
         element = Body.nloc;
@@ -60,10 +61,10 @@ function Visualization(Body,vis, ShowNodeNumbers)
             for ii = 1:nl
                 
                 [X,U] = GetCoorDisp(ii,Body.nloc,Body.P0,Body.u);     % matrix form    
-                S_00 = Sigma_2412(Body.E,Body.nu,U,X,-1,-1);
-                S_10 = Sigma_2412(Body.E,Body.nu,U,X, 1,-1);
-                S_01 = Sigma_2412(Body.E,Body.nu,U,X, 1, 1);
-                S_11 = Sigma_2412(Body.E,Body.nu,U,X,-1, 1);
+                S_00 = Sigma_2412(Body.E,Body.nu,U,X,-1,-1,StressFunction);
+                S_10 = Sigma_2412(Body.E,Body.nu,U,X, 1,-1,StressFunction);
+                S_01 = Sigma_2412(Body.E,Body.nu,U,X, 1, 1,StressFunction);
+                S_11 = Sigma_2412(Body.E,Body.nu,U,X,-1, 1,StressFunction);
                
                 if vis == "sigma_VM"
                     Sigma_00 = Sigma_VM(S_00);

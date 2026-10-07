@@ -9,7 +9,7 @@ end
 format long;
 addpath(genpath(pwd));
 
-p = 2e9;    % pressure [Pa]. Small (p/E = 1e-4) so the exact small-strain solution below is valid
+p = 2e9;
 W = 6;
 
 %########## Bodies Data : Element positioning (from (0.0) coord. ) ########
@@ -20,6 +20,7 @@ Body1.Lz = 0.1;
 Body1.E=2e11;
 Body1.nu=0.28;
 Radius = 0.75;
+Body1 = SetMaterial(Body1, "Neo"); 
 
 % Body 2
 Body2.Lx = 12;
@@ -27,6 +28,8 @@ Body2.Ly = 5;
 Body2.Lz = 0.1;
 Body2.E=2e11;
 Body2.nu=0.28;
+Body2 = SetMaterial(Body2, "Neo"); 
+
 
 Body1.shift.x = W;
 Body1.shift.y = Body2.Ly - 1e-11;   % tiny initial overlap -> contact is active at iteration 1

@@ -16,6 +16,7 @@ Body1.Ly = 0.01;
 Body1.Lz = 0.1;
 Body1.E=2e11;
 Body1.nu=0.3;
+Body1 = SetMaterial(Body1, "KS"); 
 Body1.shift.y = Body1.Ly - 1e-10;   % tiny initial overlap -> contact is active at iteration 1
 
 % Body 2
@@ -24,6 +25,7 @@ Body2.Ly = 0.01;
 Body2.Lz = 0.1;
 Body2.E=2e11;
 Body2.nu=0.3;
+Body2 = SetMaterial(Body2, "KS"); 
 
 %#################### Mesh #########################################
 dx1 = 16;
@@ -208,7 +210,7 @@ for iElem = 1:size(Body2.nloc,1)
     if sum(ismember(Body2.nloc(iElem,:), TopNodes)) == 2          % element with an edge on the contact surface
         [X,U] = GetCoorDisp(iElem,Body2.nloc,Body2.P0,Body2.u);
         for xiPoint = [-1 1]/sqrt(3)
-            Sigma = Sigma_2412(Body2.E,Body2.nu,U,X,xiPoint,1);   % eta = +1 is the top edge
+            Sigma = Sigma_2412(Body2.E,Body2.nu,U,X,xiPoint,1,Body2.StressFunction);   % eta = +1 is the top edge
             MaxPressureError = max(MaxPressureError, abs(-Sigma(2,2)/p - 1));
         end
     end
