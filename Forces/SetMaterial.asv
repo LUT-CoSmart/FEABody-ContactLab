@@ -1,0 +1,33 @@
+function Body = SetMaterial(Body,name)
+    
+    if 
+        name = "KS";
+    end
+    
+    if (nargin < 2) || (name ~= "KS" || name ~= "Neo")
+        warning('unknown Material "%s". Use "KS" or "Neo", set to "KS"', name);
+        name = "KS";
+    else
+
+    end
+    path = 'ElementFunctions';
+
+    switch name
+        
+        
+
+        case "KS"
+
+            Body.ForceVolumeFunction = @SVK.dFe_2412V;               % normal-strain part, 2x2 Gauss points
+            Body.ForceShearFunction  = @SVK.dFe_2412S;               % shear part, 1 Gauss point
+            Body.StressFunction      = @SVK.Sigma_raw_2412;          % 2nd Piola-Kirchhoff stress
+
+        case "Neo"
+            Body.ForceVolumeFunction = @NeoHookean.dFe_2412V;        % whole energy, 2x2 Gauss points
+            Body.ForceShearFunction  = @NeoHookean.dFe_2412S;        % returns zeros
+            Body.StressFunction      = @NeoHookean.Sigma_raw_2412;   % 2nd Piola-Kirchhoff stress
+        otherwise
+            error('CreateFEMesh: unknown Material "%s". Use "KS" or "Neo".', name);
+    end
+
+  

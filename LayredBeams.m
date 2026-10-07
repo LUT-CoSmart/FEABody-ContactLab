@@ -16,6 +16,8 @@ Body1.Ly = 0.5;
 Body1.Lz = 0.1;
 Body1.E=2.07e11;
 Body1.nu=0.3;
+Body1 = SetMaterial(Body1, "KS"); 
+
 
 % Body 2
 Body2.Lx = 2;
@@ -24,6 +26,7 @@ Body2.Lz = 0.1;
 Body2.E=2.07e11;
 Body2.nu=0.3;
 Body2.shift.y = -Body2.Ly;
+Body2 = SetMaterial(Body2, "KS"); 
 
 %#################### Mesh #########################################
 dx1 = 8;

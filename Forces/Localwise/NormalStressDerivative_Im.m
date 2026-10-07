@@ -1,4 +1,4 @@
-function dsigma = NormalStressDerivative_Im(E,nu,U,X,xi,eta,Normal)
+function dsigma = NormalStressDerivative_Im(E,nu,U,X,xi,eta,Normal,StressFunction)
 
     % test the idea of imagery things
     %% TODO: make it automatic as well
@@ -7,7 +7,7 @@ function dsigma = NormalStressDerivative_Im(E,nu,U,X,xi,eta,Normal)
     for j = 1:length(U)
         U_trial = complex(U);
         U_trial(j) = U_trial(j)+1i*h;
-        Sigma_trial = Sigma_2412(E,nu,U_trial,X,xi,eta);
+        Sigma_trial = Sigma_2412(E,nu,U_trial,X,xi,eta,StressFunction);
         dsigma(j) = imag(Normal.'*Sigma_trial*Normal)/h;
     end
 end

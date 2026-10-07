@@ -1,10 +1,10 @@
-function dsigma = NormalStressDerivative(E,nu,U,X,xi,eta,Normal)
+function dsigma = NormalStressDerivative(E,nu,U,X,xi,eta,Normal,StressFunction)
 
     h = 2*sqrt(eps);
     
 
     % Normal stress at the original displacement vector
-    Sigma_0 = Sigma_2412(E,nu,U,X,xi,eta);   
+    Sigma_0 = Sigma_2412(E,nu,U,X,xi,eta,StressFunction);   
     sigmaNN_0 = Normal.'*Sigma_0*Normal;
 
     dsigma = zeros(8,1);
@@ -15,7 +15,7 @@ function dsigma = NormalStressDerivative(E,nu,U,X,xi,eta,Normal)
         I_vec(j) = 1;
         Uh = U - h*I_vec;
 
-        Sigmah = Sigma_2412(E,nu,Uh,X,xi,eta);        
+        Sigmah = Sigma_2412(E,nu,Uh,X,xi,eta,StressFunction);        
         sigmaNN_h = Normal.'*Sigmah*Normal;
         dsigma(j) = (sigmaNN_0 - sigmaNN_h)/h;
 

@@ -51,28 +51,9 @@ Je = jacobian(XXh,[xi,eta]);
 JeInv = Je^(-1);
 nablau=jacobian(uuh,[xi,eta])*JeInv;
 F = eye(2) + nablau;
-EE=1/2*(nablau+nablau.'+nablau.'*nablau);
-% strain vector
-eps=[EE(1,1), EE(2,2), 2*EE(1,2)].';
-detJe=det(Je);
-mu = E/(2*(1+nu));
-lambda   = E*nu/((1+nu)*(1-2*nu));
-C = F.'*F;             
-C_inv = inv(C);
-J = det(F);                             
-W = mu/2*(trace(C) + 1 - 3) - mu*log(J) + lambda/2*log(J)^2;
-UdAV = Lz*W*detJe; 
-UdAS = sym(0);          % no separate shear part -> dFe_2412S returns zeros
-Sigma = mu*(eye(2) - C_inv) + lambda*log(J)*C_inv;
 
-% --------------------------------
-for kk=1:8
-    dFeV(kk)=diff(UdAV,uu(kk));
-    dFeS(kk)=diff(UdAS,uu(kk));
-end
-
-matlabFunction(dFeV, 'file','dFe_2412V',     'vars',{E,nu,Lz,uu,X,xi,eta});
-matlabFunction(dFeS, 'file','dFe_2412S',     'vars',{E,nu,Lz,uu,X,xi,eta});
-matlabFunction(Sigma,'file','Sigma_raw_2412','vars',{E,nu,uu,X,xi,eta});
 matlabFunction(nablau,'file','nabla_u_2412','vars',{uu,X,xi,eta});
 matlabFunction(F,'file','F_2412','vars',{uu,X,xi,eta});
+matlabFunction(Nm,'file','Nm_2412','vars',{xi,eta});
+matlabFunction(Nm_xi,'file','Nm_2412_xi','vars',{xi,eta});
+matlabFunction(Nm_eta,'file','Nm_2412_eta','vars',{xi,eta});

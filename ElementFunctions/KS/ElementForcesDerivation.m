@@ -78,16 +78,10 @@ for kk=1:8
     dFeS(kk)=diff(UdAS,uu(kk));
 end 
 
-% % matlabFunction(dFe,'file','dFe_2412','vars',{E,nu,Lz,uu,X,xi,eta});
-% matlabFunction(dFeV,'file','dFe_2412V','vars',{E,nu,Lz,uu,X,xi,eta});
-% matlabFunction(dFeS,'file','dFe_2412S','vars',{E,nu,Lz,uu,X,xi,eta});
-% matlabFunction(Nm,'file','Nm_2412','vars',{xi,eta});
-% matlabFunction(Nm_xi,'file','Nm_2412_xi','vars',{xi,eta});
-% matlabFunction(Nm_eta,'file','Nm_2412_eta','vars',{xi,eta});
-% matlabFunction(nablau,'file','nabla_u_2412','vars',{uu,X,xi,eta}); 
-% matlabFunction(F,'file','F_2412','vars',{uu,X,xi,eta});
-
 sigma = DD * eps;
 Sigma = [sigma(1) sigma(3);
          sigma(3) sigma(2)];
+
+matlabFunction(dFeV,'file','dFe_2412V','vars',{E,nu,Lz,uu,X,xi,eta});
+matlabFunction(dFeS,'file','dFe_2412S','vars',{E,nu,Lz,uu,X,xi,eta});
 matlabFunction(Sigma,'file','Sigma_raw_2412','vars',{E,nu,uu,X,xi,eta});

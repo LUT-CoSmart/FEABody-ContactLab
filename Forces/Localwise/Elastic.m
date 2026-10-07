@@ -14,10 +14,10 @@ for ii = 1:nl
     % Gauss integration (with separation on 2 parts) 
     % volume part 
     n_points = 2;
-    [Klocv, Fev] = Stiffness(@dFe_2412V,n_points,Body.E,Body.nu,Body.Lz,U,X,h);
+    [Klocv, Fev] = Stiffness(Body.ForceVolumeFunction,n_points,Body.E,Body.nu,Body.Lz,U,X,h);
     % shear part  
     n_points = 1;
-    [Klocs, Fes] = Stiffness(@dFe_2412S,n_points,Body.E,Body.nu,Body.Lz,U,X,h);
+    [Klocs, Fes] = Stiffness(Body.ForceShearFunction,n_points,Body.E,Body.nu,Body.Lz,U,X,h);
 
     % Assemble   
     Kloc=Klocs+Klocv;     
