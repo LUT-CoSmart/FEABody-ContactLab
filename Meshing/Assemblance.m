@@ -69,7 +69,12 @@ function [Body1, Body2, uu_bc, deltaf, lambda] = Assemblance(iteration,Solution,
     ff_bc_old = ff_bc;
     uu_bc_old = lambdaBackTrack * uu_bc;
     
-    deltaf = ff_bc(1:size(Ke_bc,1))/norm(Fext_bc);
+    ReferenceForce = norm(Fext_bc);
+    if ReferenceForce == 0          % displacement-driven load (no external forces): scale by the reaction forces
+        ReferenceForce = norm(ff(~bc));
+    end    
+    deltaf = ff_bc(1:size(Ke_bc,1))/ReferenceForce;
+
     uu_bc = lambdaBackTrack *uu_bc(1:Body1.ndof + Body2.ndof); % removing potential additional DOFs from Lagrange-based approaches
     
     % Displacement separation

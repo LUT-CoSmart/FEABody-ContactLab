@@ -17,8 +17,8 @@ W = 6;
 Body1.Lx = 1.2;
 Body1.Ly = 4;
 Body1.Lz = 0.1;
-Body1.E=2e11;
-Body1.nu=0.28;
+Body1.E=68.96*10^(8+6);
+Body1.nu=0.32;
 Radius = 0.75;
 Body1 = SetMaterial(Body1, "Neo"); 
 
@@ -26,8 +26,8 @@ Body1 = SetMaterial(Body1, "Neo");
 Body2.Lx = 12;
 Body2.Ly = 5;
 Body2.Lz = 0.1;
-Body2.E=2e11;
-Body2.nu=0.28;
+Body2.E=68.96*10^(7+6);
+Body2.nu=0.32;
 Body2 = SetMaterial(Body2, "Neo"); 
 
 
@@ -35,10 +35,10 @@ Body1.shift.x = W;
 Body1.shift.y = Body2.Ly - 1e-11;   % tiny initial overlap -> contact is active at iteration 1
 
 %#################### Mesh #########################################
-dx1 = 9;
+dx1 = 7;
 dy1 = 2;
 
-dx2 = 10;
+dx2 = 8;
 dy2 = 8;
 
 Body1.nElems.x = dx1;
@@ -58,18 +58,18 @@ Body2 = CreateFEMesh(Body2);
 % %#################### BC ###########################################
 Body1.loc.x = 'all';
 Body1.loc.y = Body1.Ly;
-Body1 = CreateBC(Body1,'ux');
+Body1 = CreateBC(Body1,'all');
 
 Body2.loc.x = 'all';
 Body2.loc.y = 0;
 Body2 = CreateBC(Body2,'all');
 
-%##################### Loadings ####################################
-% Whole top edge of the upper block.
-Body1.Fext.x = 0;
-Body1.Fext.y = -p*Body1.Lx*Body1.Lz;
-Body1.Fext.loc.x = 'all';
-Body1.Fext.loc.y = Body1.Ly;
+%##################### Prescribed displacement of the die top (instead of a force) ##############
+VerticalDisplacement = 0.01;
+AppliedDisp.x = 'all';
+AppliedDisp.y = Body1.Ly;
+AppliedDispNodes = FindGlobNodalID(Body1.P0, AppliedDisp, Body1.shift);
+AppliedDispVerticalDofs = xlocChosen(Body1.DofsAtNode, AppliedDispNodes, 2);
 
 %##################### Contact surfaces #############################
 Body1.contact.loc.x = 'all';
@@ -96,8 +96,8 @@ if ~SWEEP
     %##################### Newton iter. parameters ######################
     imax = 50; 
     tol=1e-3;   
-    LoadType = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-    steps= 20;
+    LoadType = "linear"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
+    steps= 10;
     Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
     PenetrationTol = 1e-7;
     ShowVisualization = true;
@@ -130,8 +130,9 @@ for ii = 1:steps
         approach.lambda.step = 0;
         approach.lambda.converge = false;
 
-        Body1 = CreateFext(ii,steps,Body1,LoadType);
-        Body2 = CreateFext(ii,steps,Body2,LoadType);
+        Body1 = CreateFext(ii,steps,Body1,LoadType);  % these give zeros, but necessary
+        Body2 = CreateFext(ii,steps,Body2,LoadType);  % these give zeros, but necessary
+        Body1.u(AppliedDispVerticalDofs) = -VerticalDisplacement*ii/steps;   % constrained DOFs: Newton never changes them, so this value is kept
 
         while (~approach.lambda.converge) && (approach.lambda.step < approach.lambda.imax)% special case for Augumented Lagrange    
                 approach.lambda.step = approach.lambda.step + 1;    
