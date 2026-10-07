@@ -42,8 +42,6 @@ for ii=1:DIM
 end
 Nm_xi = diff(Nm, xi);
 Nm_eta = diff(Nm, eta);
-
-% Nvec_2412=matlabFunction(Nvec)
 % Interpolation for assumed displacement field u
 uuh=Nm*uu;
 % Interpolation for geometry (position)
@@ -56,14 +54,14 @@ F = eye(2) + nablau;
 EE=1/2*(nablau+nablau.'+nablau.'*nablau);
 % strain vector
 eps=[EE(1,1), EE(2,2), 2*EE(1,2)].';
-detJe=det(Je);% detJe is used in the FEM solver, not here.
+detJe=det(Je);
 mu = E/(2*(1+nu));
 lambda   = E*nu/((1+nu)*(1-2*nu));
 C = F.'*F;             
 C_inv = inv(C);
 J = det(F);                             
 W = mu/2*(trace(C) + 1 - 3) - mu*log(J) + lambda/2*log(J)^2;
-UdAV = Lz*W*detJe;      % whole energy in the V part (2x2 Gauss points in Elastic.m)
+UdAV = Lz*W*detJe; 
 UdAS = sym(0);          % no separate shear part -> dFe_2412S returns zeros
 Sigma = mu*(eye(2) - C_inv) + lambda*log(J)*C_inv;
 
@@ -78,5 +76,3 @@ matlabFunction(dFeS, 'file','dFe_2412S',     'vars',{E,nu,Lz,uu,X,xi,eta});
 matlabFunction(Sigma,'file','Sigma_raw_2412','vars',{E,nu,uu,X,xi,eta});
 matlabFunction(nablau,'file','nabla_u_2412','vars',{uu,X,xi,eta});
 matlabFunction(F,'file','F_2412','vars',{uu,X,xi,eta});
-nabla_sigma = jacobian(sigma,[xi,eta])*JeInv;
-matlabFunction(nabla_sigma,'file','nabla_sigma_2412','vars',{E,nu,uu,X,xi,eta});
