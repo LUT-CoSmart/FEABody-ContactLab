@@ -42,7 +42,7 @@ function [Fc,lambda_trial] = AugmentedNitscheContactForce(ContactBody,TargetBody
         [X_targ,U_targ] = GetCoorDisp(element_targ,TargetBody.nloc,TargetBody.P0,TargetBody.u);
         [xi_targ,eta_targ] = FindIsoCoord(X_targ,U_targ,Outcome.Position);
         Nm_targ = Nm_2412(xi_targ,eta_targ);
-        Sigma_targ = Sigma_2412(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,TargetBody.StressFunctio);
+        Sigma_targ = Sigma_2412(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,TargetBody.StressFunction);
         sigma_nn_targ = Normal_targ.'*Sigma_targ*Normal_targ;
         dsigma_targ = NormalStressDerivative_Im(TargetBody.E,TargetBody.nu,U_targ,X_targ,xi_targ,eta_targ,Normal_targ,TargetBody.StressFunction);
 

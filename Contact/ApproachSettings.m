@@ -1,7 +1,11 @@
 function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                                GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha,PenetrationTol)
+                                GapfuncPairs,Perturbation,PointsofInterest,ContactBody,TargetBody,alpha,PenetrationTol,backtrackTrue)
     
-    backtrack.meaning = true;% staring back track for the best solution to find an equlibrium
+    if nargin < 11
+        backtrack.meaning = true;
+    else    
+        backtrack.meaning = backtrackTrue;% staring back track for the best solution to find an equlibrium
+    end
     approach.lambda.meaning = [];
     approach.lambda.imax = 1; % activation maximal iterations for augumemted algorithms 
     approach.perturbation = Perturbation;
@@ -51,7 +55,6 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
             AimFunction = @(Body1,Body2,approach) PenaltyNitscheContactForce(Body1,Body2,approach);
             
         elseif approachSubtype == "Augumented Nitsche"   
-            approach.theta
             AimFunction = @(Body1,Body2,approach) AugmentedNitscheContactForce(Body1,Body2,approach);
 
         elseif approachSubtype == "Penalty"

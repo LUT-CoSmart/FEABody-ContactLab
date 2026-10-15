@@ -1,3 +1,4 @@
+%% ALL data is in mm and MPA
 clc, clear, close all
 if ~exist('SWEEP','var')|| ~SWEEP % we have apper file to deal with    
     clc, clear, close all    
@@ -9,36 +10,33 @@ end
 format long;
 addpath(genpath(pwd));
 
-p = 2e9;
-W = 6;
-
 %########## Bodies Data : Element positioning (from (0.0) coord. ) ########
 % Body 1
 Body1.Lx = 1.2;
-Body1.Ly = 4;
-Body1.Lz = 0.1;
-Body1.E=68.96*10^(8+6);
+Body1.Ly = 1.5;
+Body1.Lz = 1;
+Body1.E=68.96*10^8;
 Body1.nu=0.32;
 Radius = 0.75;
 Body1 = SetMaterial(Body1, "Neo"); 
 
 % Body 2
 Body2.Lx = 12;
-Body2.Ly = 5;
-Body2.Lz = 0.1;
-Body2.E=68.96*10^(7+6);
+Body2.Ly = 4;
+Body2.Lz = 1;
+Body2.E=68.96*10^(7);
 Body2.nu=0.32;
 Body2 = SetMaterial(Body2, "Neo"); 
 
 
-Body1.shift.x = W;
-Body1.shift.y = Body2.Ly - 1e-11;   % tiny initial overlap -> contact is active at iteration 1
+Body1.shift.x = (Body2.Lx-Body1.Lx)/2;
+Body1.shift.y = Body2.Ly-1e-3;   
 
 %#################### Mesh #########################################
-dx1 = 7;
-dy1 = 2;
+dx1 = 14;
+dy1 = 10;
 
-dx2 = 8;
+dx2 = 29;
 dy2 = 8;
 
 Body1.nElems.x = dx1;
@@ -50,11 +48,10 @@ Body2.nElems.y = dy2;
 Body1 = CreateFEMesh(Body1);
 Body2 = CreateFEMesh(Body2);
 
-
+% shape check
 % Visualization(Body1);
 % Visualization(Body2);
 
- 
 % %#################### BC ###########################################
 Body1.loc.x = 'all';
 Body1.loc.y = Body1.Ly;
@@ -64,8 +61,8 @@ Body2.loc.x = 'all';
 Body2.loc.y = 0;
 Body2 = CreateBC(Body2,'all');
 
-%##################### Prescribed displacement of the die top (instead of a force) ##############
-VerticalDisplacement = 0.01;
+%##################### Prescribed displacement ##############
+VerticalDisplacement = 1;
 AppliedDisp.x = 'all';
 AppliedDisp.y = Body1.Ly;
 AppliedDispNodes = FindGlobNodalID(Body1.P0, AppliedDisp, Body1.shift);
@@ -84,25 +81,24 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 Body1 = RoundingBottom(Body1, Radius);
 
 %##################### Contact ######################################
-
 % Subtypes
 % Penalty: Penalty, Augumented Lagrange,
 %          Nitsche, penalty-Nitsche,  Augumented Nitsche
 % Lagrange: Lagrange, perturbed Lagrange
 if ~SWEEP 
     approachBasis = "Penalty";
-    approachSubtype = "Penalty";
-    alpha = 0.10;
+    approachSubtype = "Nitsche";
+    alpha = 0.5;
     %##################### Newton iter. parameters ######################
-    imax = 50; 
+    imax = 15; 
     tol=1e-3;   
     LoadType = "linear"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-    steps= 10;
+    steps= 20;
     Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
-    PenetrationTol = 1e-7;
+    PenetrationTol = 1e-4;
     ShowVisualization = true;
-    ShowNodeNumbers = true;
-    WhatoToShow = "sigma_yy"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM" 
+    ShowNodeNumbers = false;
+    WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM" 
 end
 
 PointsofInterest.Name = "Nodes";
@@ -111,10 +107,11 @@ PointsofInterest.n = 1;
 [ContactPointfunc, Gapfunc, GapfuncPairs]  = ContactPointSetting(PointsofInterest,approachBasis);
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
+Backtrack = false;
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha,PenetrationTol);
+                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha,PenetrationTol,Backtrack);
 if ~SWEEP
-    approach.theta = -1;
+    approach.theta = -1; 
 else
     approach.theta = theta;
 end  

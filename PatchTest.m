@@ -1,4 +1,4 @@
-%% From Kim J. H. et Al., 1976
+%% From Kim J. H. et Al., 2008
 clc, clear, close all
 if ~exist('SWEEP','var')|| ~SWEEP % we have apper file to deal with    
     clc, clear, close all    

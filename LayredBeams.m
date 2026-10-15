@@ -44,6 +44,7 @@ Body2.nElems.y = dy2;
 Body1 = CreateFEMesh(Body1);
 Body2 = CreateFEMesh(Body2);
 
+
 %#################### BC ###########################################
 Body1.loc.x = 0; 
 Body1.loc.y = 'all';  % Location of nodes along the axis or 'all' can be an option
@@ -97,7 +98,7 @@ if ~SWEEP
     Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
     PenetrationTol = 1e-7;
     ShowVisualization = true;
-    ShowNodeNumbers = true;
+    ShowNodeNumbers = false;
     WhatoToShow = "sigma_VM"; % options: "ux", "uy", "u_total", "sigma_xx", "sigma_yy", "sigma_xy", "sigma_VM" 
 end
 
