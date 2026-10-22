@@ -1,14 +1,16 @@
 clc, clear, close all
-% Run from SweepAlpha.m: SWEEP = true, method and alpha come from the sweep.
-if ~exist('SWEEP','var') || ~SWEEP
-    clc, clear, close all
+if ~exist('SWEEP','var')|| ~SWEEP % we have apper file to deal with    
+    clc, clear, close all    
     SWEEP = false;
+else
+    clear Body1 Body2 approach backtrack Result Assemblance BestStep Contact
 end
-clear Body1 Body2 Body2Left Body2Right approach backtrack   % never reuse bodies from a previous run
+
 format long;
 addpath(genpath(pwd));
 
-p = 10e3;   
+p = 1e4;   
+InitialOverlap = 1e-12;
 %########## Bodies Data : Element positioning (from (0.0) coord. ) ########
 % Body 1
 Body1.Lx = 0.05;
@@ -17,7 +19,7 @@ Body1.Lz = 0.1;
 Body1.E=2e11;
 Body1.nu=0.3;
 Body1 = SetMaterial(Body1, "KS"); 
-Body1.shift.y = Body1.Ly - 1e-10;   % tiny initial overlap -> contact is active at iteration 1
+Body1.shift.y = Body1.Ly -InitialOverlap;   % tiny initial overlap -> contact is active at iteration 1
 
 % Body 2
 Body2.Lx = 0.05;
@@ -28,11 +30,11 @@ Body2.nu=0.3;
 Body2 = SetMaterial(Body2, "KS"); 
 
 %#################### Mesh #########################################
-dx1 = 16;
+dx1 = 10;
 dy1 = 4;
 
-dx2 = 10;
-dy2 = 8;
+dx2 = 12;
+dy2 = 6;
 
 Body1.nElems.x = dx1;
 Body1.nElems.y = dy1;
@@ -79,16 +81,18 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 % Penalty: Penalty, Augumented Lagrange,
 %          Nitsche, penalty-Nitsche,  Augumented Nitsche
 % Lagrange: Lagrange, perturbed Lagrange
+
 if ~SWEEP 
     approachBasis = "Penalty";
-    approachSubtype = "Nitsche";
-    alpha = 0.10;
+    approachSubtype = "Augumented Nitsche";
+    alpha = 1;
     %##################### Newton iter. parameters ######################
     imax = 50; 
-    tol=1e-3;   
+    tol=1e-4;   
     LoadType = "cubic"; % Update forces, supported loading types: linear, exponential, quadratic, cubic;
-    steps= 20;
+    steps= 1;
     Solution = "Newton-Rapson"; % Options: Newton-Rapson, Newton-Broyden
+    BackTrack = true;
     PenetrationTol = 1e-7;
     ShowVisualization = true;
     ShowNodeNumbers = true;
@@ -102,7 +106,8 @@ PointsofInterest.n = 2;
 Perturbation = "automatic"; % Options: "automatic", "incremental"
 
 [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,ContactPointfunc,...
-                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha,PenetrationTol);
+                       GapfuncPairs,Perturbation,PointsofInterest,Body1,Body2,alpha,PenetrationTol,...
+                       BackTrack);
 if ~SWEEP
     approach.theta = -1; % assymetric nitsche
 else
@@ -197,7 +202,7 @@ end
 %   u_x = nu*p/E*x,   u_y = -p/E*y      (u_x = 0 along the left edge x = 0 of both blocks)
 StrainX = Body1.nu*p/Body1.E;
 StrainY = -p/Body1.E;
-ExactU1 = [StrainX*Body1.P0(:,1), StrainY*Body1.P0(:,2)]';   % 2 x number of nodes
+ExactU1 = [StrainX*Body1.P0(:,1), StrainY*(Body1.P0(:,2) + InitialOverlap) + InitialOverlap]';   % 2 x number of nodes
 ExactU2 = [StrainX*Body2.P0(:,1), StrainY*Body2.P0(:,2)]';
 NodalError   = [vecnorm(reshape(Body1.u,2,[]) - ExactU1), vecnorm(reshape(Body2.u,2,[]) - ExactU2)];
 ErrorValue   = max(NodalError) / max([vecnorm(ExactU1), vecnorm(ExactU2)]);
@@ -215,7 +220,7 @@ for iElem = 1:size(Body2.nloc,1)
         end
     end
 end
-MaxPressureError
+
 AccuracyError = Inf;                                        % failed run = never counted as accurate
 if ~failed
     AccuracyError = ErrorValue;
@@ -242,3 +247,4 @@ Result = struct('NewtonIterations',  Niter, ...
 if ~SWEEP
     PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);
 end
+

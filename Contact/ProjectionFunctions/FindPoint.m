@@ -9,7 +9,14 @@ function Result = FindPoint(Body,Point)
     SurfacePoints_Y = Body.q(idY) + Body.u(idY); % coords on Y axis
     SurfacePoints = [SurfacePoints_X SurfacePoints_Y]; % nodes of the contact surfaces of the contact body
     distances = vecnorm(SurfacePoints - Point, 2, 2); % distances between all target contact node and the point
-    [~, sortedIndices] = sort(distances); % sorting and choosing two closest
+    
+    % [~, sortedIndices] = sort(distances); % sorting and choosing two closest
+
+    [sortedDistances, sortedIndices] = sort(distances); % removing jumps from segment (element) to segmrnet if we are on node!  
+    if numel(sortedIndices) > 2 && abs(sortedDistances(2) - sortedDistances(3)) < 1e-6*sortedDistances(2)
+        sortedIndices(2:3) = sort(sortedIndices(2:3));
+    end
+
     a = SurfaceNodes(sortedIndices(1));
     b = SurfaceNodes(sortedIndices(2));
     position_a = SurfacePoints(sortedIndices(1),:);

@@ -1,4 +1,4 @@
-%clc, clear, close all
+clc, clear, close all
 if ~exist('SWEEP','var')|| ~SWEEP % we have apper file to deal with    
     clc, clear, close all    
     SWEEP = false;
@@ -85,6 +85,7 @@ Body2.contact.nodalid = FindGlobNodalID(Body2.P0,Body2.contact.loc,Body2.shift);
 % Subtypes
 % Penalty: Penalty, Augumented Lagrange,
 %          Nitsche, penalty-Nitsche,  Augumented Nitsche
+%          penalty-Nitsche-jump 
 % Lagrange: Lagrange, perturbed Lagrange
 if ~SWEEP 
     approachBasis = "Penalty";  % Options: None, Penalty, Lagrange 

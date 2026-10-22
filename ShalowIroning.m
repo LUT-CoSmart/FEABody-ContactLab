@@ -197,24 +197,6 @@ for ii = 1:steps
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Metrics for the alpha sweep %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [MeanPenetration, MaxPenetration] = Gapfunc(Body1,Body2);   % [m]
-% 
-% 
-% AlphaEffective = alpha;                                     % penalty-Nitsche raises its own alpha
-% if approach.Name == "penalty-Nitsche"
-%     AlphaEffective = max(alpha, max(alpha*approach.lambda.meaning/approach.penalty));
-% end
-% 
-% Result = struct('NewtonIterations',  Niter, ...
-%                 'AccuracyError',     AccuracyError, ...
-%                 'AccuracyType',      AccuracyType, ...
-%                 'MeanPenetration_h', MeanPenetration/approach.h, ...
-%                 'MaxPenetration_h',  MaxPenetration/approach.h, ...
-%                 'Failed',            failed, ...
-%                 'CPUTime_s',         titertot, ...
-%                 'AlphaEffective',    AlphaEffective);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %##################### Post-Processing ######################
 if ~SWEEP
     PostProcess(Body1, Body2, ShowVisualization, WhatoToShow, ShowNodeNumbers, approach, ContactPointfunc, Gapfunc,Solution, PointsofInterest);

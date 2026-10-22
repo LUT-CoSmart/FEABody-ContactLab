@@ -8,7 +8,7 @@ function Visualization(Body,vis, ShowNodeNumbers)
         vis = "u_total";
     end
     
-    FontSize = 10;
+    FontSize = 30;
     DofsAtNode = Body.DofsAtNode;
     nl=Body.nElems.x * Body.nElems.y;    % computes number of elements
     StressFunction = Body.StressFunction;

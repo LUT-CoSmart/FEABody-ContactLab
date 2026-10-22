@@ -1,12 +1,18 @@
-function Body = RoundingBottom(Body, Radius)
+function Body = RoundingBottom(Body, Radius, ArcCenterX)
 
     % Lifts the nodes so that the bottom edge follows a circular arc; x is not changing
-    if Radius < Body.Lx/2
-        warning('Radius must be at least half of the width, set to the half');
-        Radius =  Body.Lx/2;
-    end    
+    % ArcCenterX (optional): x of the lowest point of the arc; default is the middle of the body
+    % Idea is to consider sym of the Hertz prblem, to save computational time
+    if nargin < 3
+        ArcCenterX = Body.shift.x + Body.Lx/2;
+    end
+    LargestDistance = max(abs(Body.P0(:,1) - ArcCenterX));
+    if Radius < LargestDistance
+        warning('Radius must be at least the largest horizontal distance from the arc centre, set to it');
+        Radius = LargestDistance;
+    end
 
-    BottomX = Body.shift.x + Body.Lx/2;
+    BottomX = ArcCenterX;
     BottomY = Body.shift.y;
 
     x = Body.P0(:,1);

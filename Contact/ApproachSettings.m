@@ -11,7 +11,8 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
     approach.perturbation = Perturbation;
     approach.ContactPointfunc = ContactPointfunc;
     approach.numberOfPoints = PointsofInterest.n;
-    if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche"  
+    if approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || approachSubtype == "Augumented Nitsche" ...
+       || approachSubtype == "penalty-Nitsche-jump"     
         [InitialContactPoints,~] = ContactPointfunc(ContactBody);
         approach.lambda.meaning = zeros(size(InitialContactPoints,1),1);
         approach.lambda.imax = 100;
@@ -38,7 +39,7 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
 
     elseif approachBasis == "Penalty"
         
-        allowed = ["Penalty", "Nitsche", "penalty-Nitsche", "Augumented Nitsche", "Augumented Lagrange"];
+        allowed = ["Penalty", "Nitsche", "penalty-Nitsche", "Augumented Nitsche", "Augumented Lagrange", "penalty-Nitsche-jump"];
                              
         if ~any(approachSubtype == allowed)
           warning("Invalid approachSubtype for approachBasis='Penalty, substituted to Penalty");
@@ -62,8 +63,14 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
         
         elseif approachSubtype == "Nitsche"
             AimFunction = @(Body1,Body2,approach) NitscheContactForce(Body1,Body2,approach);
-        end
-                    
+
+        elseif approachSubtype == "penalty-Nitsche-jump"
+            approach.gapTolerance  = PenetrationTol*h;                        % as penalty-Nitsche
+            %% TODO: play with the parameters 
+            approach.jumpTolerance = 0.1;                                     % allowed stress jump / max contact pressure
+            approach.maxPenalty    = 1e3*max(ContactBody.E,TargetBody.E)/h;   % maximal alpha = 1000
+            AimFunction = @(Body1,Body2,approach) PenaltyNitscheContactForce(Body1,Body2,approach);
+        end            
     else
         warning("Contact is not activated");
         AimFunction = [];

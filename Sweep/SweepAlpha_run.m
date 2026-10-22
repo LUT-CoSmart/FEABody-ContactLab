@@ -5,18 +5,23 @@ SWEEP = true; % used in other prgrams, when called
 if SWEEP
     approachBasis = "Penalty";  % Options: None, Penalty, Lagrange 
     imax = 50;
-    tol = 1e-3;              % Newton and lambda-loop tolerance (all methods)
-    PenetrationTol = 1e-3;   % accuracy target: max penetration / h
-    Loadtype = "cubic";
-    steps = 40;
+    tol = 1e-4;              % Newton and lambda-loop tolerance (all methods)
+    PenetrationTol = 1e-5;   % accuracy target: max penetration / h
+    LoadType = "linear";
+    steps = 10;
     Solution = "Newton-Rapson";
+    BackTrack = false;
     theta = -1;
 end
 
-CaseName    = 'LayredBeams'; % 'PatchTest' or 'LayredBeams'
-Methods     = ["penalty-Nitsche","Nitsche","Penalty","Augumented Lagrange","Augumented Nitsche"];
-% Alphas      = 10.^[0 1 2 3];
-Alphas      = 10.^(-2:0.5:3);
+CaseName    = 'HertzProblem'; % 'PatchTest' or 'LayredBeams', 'TaylorPatchTest', 'HertzProblem'
+Methods     = ["penalty-Nitsche"]; % "Augumented Nitsche"
+if theta == 1
+     Alphas      = 10.^(0:0.5:2);
+     % Alphas      = 10.^[0 0.5];
+elseif theta == -1
+    Alphas      = 10.^(-2:0.5:2);
+end
 AccuracyTol = PenetrationTol;
 
 
@@ -32,8 +37,9 @@ for iM = 1:numel(Methods)
         catch ME
             fprintf(2,'%s, alpha = %g crashed: %s\n', Methods(iM), alpha, ME.message);
             Result = struct('NewtonIterations',NaN,'AccuracyError',Inf,'AccuracyType',"crashed", ...
-                            'MeanPenetration_h',NaN,'MaxPenetration_h',NaN,'Failed',true, ...
-                            'CPUTime_s',NaN,'AlphaEffective',alpha);
+                            'MaxPressureError',NaN,'MeanPenetration_h',NaN,'MaxPenetration_h',NaN, ...
+                            'MaxPenetration_mm',NaN,'Failed',true,'CPUTime_s',NaN,'AlphaEffective',alpha, ...
+                            'PeakPressureError',NaN,'ContactForce_N_per_m',NaN,'HalfWidth_to_Radius',NaN);
         end
         Row   = [table(Methods(iM), alpha, 'VariableNames', {'Method','Alpha'}), struct2table(Result)];
         Table = [Table; Row];
