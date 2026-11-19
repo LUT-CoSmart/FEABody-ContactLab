@@ -171,8 +171,8 @@ for ii = 1:steps
                     failed = true;
                     break;
                 end
-                if  approachSubtype == "Augumented Lagrange" || approachSubtype == "penalty-Nitsche" || ...
-                    approachSubtype == "Augumented Nitsche"
+                if any(approach.Name == ["Augumented Lagrange", "penalty-Nitsche", ...
+                        "Augumented Nitsche", "penalty-Nitsche-jump"])
 
                     lambda_old = approach.lambda.meaning;
                     [~,lambda_next] = approach.AimFunction(Body1,Body2,approach);
