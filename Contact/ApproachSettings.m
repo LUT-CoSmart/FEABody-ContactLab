@@ -63,13 +63,13 @@ function [approach,backtrack] = ApproachSettings(approachBasis,approachSubtype,C
         
         elseif approachSubtype == "Nitsche"
             AimFunction = @(Body1,Body2,approach) NitscheContactForce(Body1,Body2,approach);
-
+          
         elseif approachSubtype == "penalty-Nitsche-jump"
             approach.gapTolerance  = PenetrationTol*h;                        % as penalty-Nitsche
             %% TODO: play with the parameters 
             approach.jumpTolerance = 0.1;                                     % allowed stress jump / max contact pressure
             approach.maxPenalty    = 1e3*max(ContactBody.E,TargetBody.E)/h;   % maximal alpha = 1000
-            AimFunction = @(Body1,Body2,approach) PenaltyNitscheContactForce(Body1,Body2,approach);
+            AimFunction = @(Body1,Body2,approach) PenaltyNitscheContactForceJump(Body1,Body2,approach);
         end            
     else
         warning("Contact is not activated");

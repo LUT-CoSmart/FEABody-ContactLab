@@ -91,4 +91,6 @@ function [Fc,pn_trial,maxPenetration] = PenaltyNitscheContactForceJump(ContactBo
         pn_trial(i) = max(pn_trial(i), min([10*pn_old(i), approach.maxPenalty, pn_target_jump]));
     end
 
+    pn_trial = min(pn_trial, approach.maxPenalty);
+
     Fc = [Fcont;Ftarg]; 
